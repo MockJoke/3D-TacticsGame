@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4289250769737374056}
   m_Layer: 0
   m_Name: tileMoutain
-  m_TagString: Tile
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -126,7 +126,7 @@ GameObject:
   - component: {fileID: 1768588535361341254}
   m_Layer: 0
   m_Name: tileMoutain
-  m_TagString: Tile
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
