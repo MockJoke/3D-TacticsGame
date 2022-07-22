@@ -8,5 +8,8 @@ public class Tile : MonoBehaviour
     public int tileX;
     public int tileY;
     
+    // The character on the tile
+    public GameObject charOnTile; 
+    
     public MapGenerator map;
 }
