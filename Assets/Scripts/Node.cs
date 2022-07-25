@@ -5,8 +5,8 @@ using UnityEngine;
 public class Node
 {
   public readonly List<Node> Neighbours;
-  public int x;
-  public int y;
+  public int X;
+  public int Y;
   
   // Edges 
   public Node()

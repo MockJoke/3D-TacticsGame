@@ -2,176 +2,216 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Net.Cache;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class MapManager : MonoBehaviour
 {
-    private MapGenerator map;
-    private PlayerMovement player; 
-    
-    public GameObject tileBeingDisplayed;
-    
-    // Cursor Info
-    public int cursorX;
-    public int cursorY;
-    // Current tile being moused over
-    public int selectedXTile;
-    public int selectedYTile;
-    
-    //Raycast for the update for mouseHover 
-    private Ray ray;
-    private RaycastHit hit;
+    private MapGenerator _map;
+    private PlayerMovement _player;
+    private GameManager _gameManager;
 
+    public GameObject charsOnBoard; 
+    
+    [Header("Selected Char Info")] 
+    public GameObject selectedChar;
+    public HashSet<Node> SelectedCharTotalRange;
+    public HashSet<Node> SelectedCharMoveRange;
+    
+    public bool charSelected = false;
+
+    public int charSelectedPrevX;
+    public int charSelectedPrevY;
+
+    public GameObject prevOccupiedTile;
+
+    //Raycast for the update for mouseHover 
+    private Ray _ray;
+    private RaycastHit _hit;
+
+    [Header("Materials")] 
+    public Material greenUIMat;
+    public Material blueUIMat;
+    public Material redUIMat;
+    
     void Start()
     {
-        map = GetComponent<MapGenerator>();
-        player = GetComponent<PlayerMovement>(); 
+        _map = GetComponent<MapGenerator>();
+        _player = GetComponent<PlayerMovement>();
+        _gameManager = GetComponent<GameManager>();
     }
 
     void Update()
     {
-        // Always trying to see where the mouse is pointing 
-        ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit))
+        // If input is left mouse down then selects the character
+        if (Input.GetMouseButtonDown(0))
         {
-            cursorUIUpdate();
-        }
-    }
-
-    // Updates the cursor for the UI
-    private void cursorUIUpdate()
-    {
-        // If hovering mouse over a tile, highlight it
-        if (hit.transform.CompareTag("Tile"))
-        {
-            if (tileBeingDisplayed == null)
+            if (selectedChar == null)
             {
-                selectedXTile = hit.transform.GetComponent<Tile>().tileX;
-                selectedYTile = hit.transform.GetComponent<Tile>().tileY;
-                cursorX = selectedXTile;
-                cursorY = selectedYTile;
-                map.quadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true;
-                tileBeingDisplayed = hit.transform.gameObject; 
+                MouseClickToSelectChar();
             }
-            else if (tileBeingDisplayed != hit.transform.gameObject)
+            
+            // Once the char has been selected, need to check if the unit has entered the selection state (1) 'Selected'; if yes then move the unit
+            else if (_player.charMoveState == _player.GetMovementStates(1) && _player.MovementQueue.Count == 0)
             {
-                selectedXTile = tileBeingDisplayed.transform.GetComponent<Tile>().tileX;
-                selectedYTile = tileBeingDisplayed.transform.GetComponent<Tile>().tileY;
-                map.quadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = false;
-
-                selectedXTile = hit.transform.GetComponent<Tile>().tileX;
-                selectedYTile = hit.transform.GetComponent<Tile>().tileY;
-                cursorX = selectedXTile;
-                cursorY = selectedYTile;
-                map.quadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true;
-                tileBeingDisplayed = hit.transform.gameObject;
-            }
-        }
-        // If hovering mouse over a character, highlight a tile that the character is occupying
-        else if (hit.transform.CompareTag("Player"))
-        {
-            if (tileBeingDisplayed == null)
-            {
-                selectedXTile = hit.transform.GetComponent<Tile>().tileX;
-                selectedYTile = hit.transform.GetComponent<Tile>().tileY;
-                cursorX = selectedXTile;
-                cursorY = selectedYTile;
-                map.quadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true;
-                tileBeingDisplayed = hit.transform.gameObject;
-            }
-            else if (tileBeingDisplayed != hit.transform.gameObject)
-            {
-                selectedXTile = tileBeingDisplayed.transform.GetComponent<Tile>().tileX;
-                selectedYTile = tileBeingDisplayed.transform.GetComponent<Tile>().tileY;
-                map.quadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = false;
-
-                selectedXTile = hit.transform.GetComponent<Tile>().tileX;
-                selectedYTile = hit.transform.GetComponent<Tile>().tileY;
-                cursorX = selectedXTile;
-                cursorY = selectedYTile;
-                map.quadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true;
-                tileBeingDisplayed = hit.transform.gameObject;
-            }
-        }
-        // If not pointing at anything
-        else
-        {
-            map.quadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = false;
-        }
-    }
-    
-    // Selects a character based on the cursor click
-    public void mouseCLickToSelectChar()
-    {
-        if (player.charSelected == false && tileBeingDisplayed != null)
-        {
-            if (tileBeingDisplayed.GetComponent<Tile>().charOnTile != null)
-            {
-                GameObject tempSelectedChar = tileBeingDisplayed.GetComponent<Tile>().charOnTile;
-
-                if (tempSelectedChar.GetComponent<PlayerMovement>().characterMoveState == tempSelectedChar
-                        .GetComponent<PlayerMovement>().GetComponent<PlayerMovement>().getMovementStates(0))
+                if (SelectTileToMoveTo())
                 {
-                    player.selectedChar = tempSelectedChar;
-                    player.selectedChar.GetComponent<PlayerMovement>().map = map;
-                    player.selectedChar.GetComponent<PlayerMovement>().setMovementStates(1);
-                    player.charSelected = true;
+                    Debug.Log("Movement path has been selected");
+                    charSelectedPrevX = _player.x;
+                    charSelectedPrevY = _player.y;
+                    prevOccupiedTile = _player.tileBeingOccupied;
+                    _gameManager.MoveChar();
+
+                    StartCoroutine(_player.MoveCharAndFinalise()); 
+                }
+                // Finalise the movement
+                else if(_player.charMoveState == _player.GetMovementStates(2))
+                {
+                    //finaliseOption();
+                }
+            }
+        }
+        // Deselect the char with the right click
+        if (Input.GetMouseButtonDown(1))
+        {
+            
+        }
+    }
+
+    // Selects a character based on the cursor click
+    public void MouseClickToSelectChar()
+    {
+        if (charSelected == false && _gameManager.tileBeingDisplayed != null)
+        {
+            if (_gameManager.tileBeingDisplayed.GetComponent<Tile>().charOnTile != null)
+            {
+                GameObject tempSelectedChar = _gameManager.tileBeingDisplayed.GetComponent<Tile>().charOnTile;
+
+                if (tempSelectedChar.GetComponent<PlayerMovement>().charMoveState == tempSelectedChar
+                        .GetComponent<PlayerMovement>().GetComponent<PlayerMovement>().GetMovementStates(0))
+                {
+                    selectedChar = tempSelectedChar;
+                    selectedChar.GetComponent<PlayerMovement>().map = _map;
+                    selectedChar.GetComponent<PlayerMovement>().SetMovementStates(1);
+                    charSelected = true;
+                    HighlightCharRange();
                 }
             }
         }
     }
     
-    // If the tile isn't occupied by another team & if the tile is walkable then you can walk through 
-    public bool charCanEnterTile(int x, int y)
+    // Checks if the tile that has been clicked is movable for the selected char
+    public bool SelectTileToMoveTo()
     {
-        if (map.tilesOnMap[x, y].GetComponent<Tile>().charOnTile != null)
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out hit))
         {
-            if (map.tilesOnMap[x, y].GetComponent<Tile>().charOnTile.GetComponent<PlayerMovement>().teamNo !=
-                player.selectedChar.GetComponent<PlayerMovement>().teamNo)
+            if (hit.transform.gameObject.CompareTag("Tile"))
+            {
+                int clickedTileX = hit.transform.GetComponent<Tile>().tileX;
+                int clickedTileY = hit.transform.GetComponent<Tile>().tileY;
+                Node nodeToCheck = _map.Graph[clickedTileX, clickedTileY];
+
+                if (SelectedCharMoveRange.Contains(nodeToCheck))
+                {
+                    if (hit.transform.gameObject.GetComponent<Tile>().charOnTile == null ||
+                        hit.transform.gameObject.GetComponent<Tile>().charOnTile == selectedChar)
+                    {
+                        Debug.Log("The tile to move to has been selected");
+                        GeneratePathTo(clickedTileX, clickedTileY);
+                        
+                        return true;
+                    }
+                }
+            }
+        }
+        else if(hit.transform.gameObject.CompareTag("Player"))
+        {
+            if (hit.transform.parent.GetComponent<PlayerMovement>().teamNo !=
+                selectedChar.GetComponent<PlayerMovement>().teamNo)
+            {
+                Debug.Log("Clicked an enemy");
+            }
+            else if (hit.transform.parent.gameObject == selectedChar)
+            {
+                GeneratePathTo(selectedChar.GetComponent<PlayerMovement>().x, selectedChar.GetComponent<PlayerMovement>().y);
+                
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    // Sets the tile as occupied if a char is on the tile
+    public void SetIfTileIsOccupied()
+    {
+        foreach (Transform team in charsOnBoard.transform)
+        {
+            foreach (Transform charOnTeam in team)
+            {
+                int charX = charOnTeam.GetComponent<PlayerMovement>().x;
+                int charY = charOnTeam.GetComponent<PlayerMovement>().y;
+                charOnTeam.GetComponent<PlayerMovement>().tileBeingOccupied = _map.TilesOnMap[charX, charY];
+                _map.TilesOnMap[charX, charY].GetComponent<Tile>().charOnTile = charOnTeam.gameObject;
+            }
+        }
+    }
+    
+    // If the tile isn't occupied by another team & if the tile is walkable then you can walk through 
+    public bool CharCanEnterTile(int x, int y)
+    {
+        if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile != null)
+        {
+            if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile.GetComponent<PlayerMovement>().teamNo !=
+                selectedChar.GetComponent<PlayerMovement>().teamNo)
             {
                 return false;
             }
         }
-        return map.tileTypes[map.tiles[x, y]].isWalkable;
+        return _map.tileTypes[_map.Tiles[x, y]].isWalkable;
     }
+    
     // checks the cost of a tile for a unit to enter 
-    public float costToEnterTile(int x, int y)
+    public float CostToEnterTile(int x, int y)
     {
-        if (charCanEnterTile(x, y) == false)
+        if (CharCanEnterTile(x, y) == false)
         {
             return Mathf.Infinity;
         }
 
-        TileType t = map.tileTypes[map.tiles[x, y]];
+        TileType t = _map.tileTypes[_map.Tiles[x, y]];
         float dist = t.movementCost;
 
         return dist; 
     }
     
     // Generates path for the selected character
-    public void generatePathTo(int x, int y)
+    public void GeneratePathTo(int x, int y)
     {
-        if (player.selectedChar.GetComponent<PlayerMovement>().x == x &&
-            player.selectedChar.GetComponent<PlayerMovement>().y == y)
+        if (selectedChar.GetComponent<PlayerMovement>().x == x &&
+            selectedChar.GetComponent<PlayerMovement>().y == y)
         {
             Debug.Log("Clicked the same tile that the character currently standing on"); 
         }
 
-        player.selectedChar.GetComponent<PlayerMovement>().path = null;
-        player.currentPath = null; 
+        selectedChar.GetComponent<PlayerMovement>().Path = null;
+        _player.CurrentPath = null; 
         
         // Path finding algorithm
         Dictionary<Node, float> dist = new Dictionary<Node, float>();
         Dictionary<Node, Node> prev = new Dictionary<Node, Node>();
-        Node source = map.Graph[player.selectedChar.GetComponent<PlayerMovement>().x,
-            player.selectedChar.GetComponent<PlayerMovement>().y];
-        Node target = map.Graph[x, y];
+        Node source = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
+            selectedChar.GetComponent<PlayerMovement>().y];
+        Node target = _map.Graph[x, y];
         dist[source] = 0;
         prev[source] = null;
         List<Node> unvisited = new List<Node>(); // unchecked Nodes
         
         // Initialise 
-        foreach (Node n in map.Graph)
+        foreach (Node n in _map.Graph)
         {
             // Initialise to infinite distance as we don't know the answer 
             if (n != source)
@@ -201,7 +241,7 @@ public class MapManager : MonoBehaviour
 
             foreach (Node n in u.Neighbours)
             {
-                float alt = dist[u] + costToEnterTile(n.x, n.y);
+                float alt = dist[u] + CostToEnterTile(n.X, n.Y);
                 if (alt < dist[n])
                 {
                     dist[n] = alt;
@@ -217,19 +257,240 @@ public class MapManager : MonoBehaviour
             return;
         }
 
-        player.currentPath = new List<Node>();
+        _player.CurrentPath = new List<Node>();
         Node curr = target;
         
         // Step through the current path and add it to the chain
         while (curr != null)
         {
-            player.currentPath.Add(curr);
+            _player.CurrentPath.Add(curr);
             curr = prev[curr];
         }
         
         // Currently currPath is from target to our source, need to reverse it from source to target
-        player.currentPath.Reverse();
+        _player.CurrentPath.Reverse();
 
-        player.selectedChar.GetComponent<PlayerMovement>().path = player.currentPath; 
+        selectedChar.GetComponent<PlayerMovement>().Path = _player.CurrentPath; 
+    }
+    
+    // In:  || Out: returns a set of nodes of the tile that the character is occupying
+    public HashSet<Node> GetTileCharIsOccupying()
+    {
+        int x = selectedChar.GetComponent<PlayerMovement>().x;
+        int y = selectedChar.GetComponent<PlayerMovement>().y;
+        HashSet<Node> charTile = new HashSet<Node>();
+        charTile.Add(_map.Graph[x, y]);
+        return charTile;
+    }
+    
+    // In:  || Out: returns the hashset of nodes that the character can reach from its position
+    public HashSet<Node> GetCharMovementOptions()
+    {
+        float[,] cost = new float[_map.mapSizeX, _map.mapSizeY];
+        
+        HashSet<Node> uiHighlight = new HashSet<Node>();
+        HashSet<Node> tempUIHighlight = new HashSet<Node>();
+        HashSet<Node> finalMovementHighlight = new HashSet<Node>();
+
+        int moveSpeed = selectedChar.GetComponent<PlayerMovement>().moveSpeed;
+
+        Node charInitialNode = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
+            selectedChar.GetComponent<PlayerMovement>().y];
+        
+        // Setup the initial costs for the neighbouring nodes
+        finalMovementHighlight.Add(charInitialNode);
+        foreach (Node n in charInitialNode.Neighbours)
+        {
+            cost[n.X, n.Y] = CostToEnterTile(n.X, n.Y);
+            if (moveSpeed - cost[n.X, n.Y] >= 0)
+            {
+                uiHighlight.Add(n);
+            }
+        }
+        finalMovementHighlight.UnionWith(uiHighlight);
+
+        while (uiHighlight.Count != 0) 
+        {
+            foreach (Node n in uiHighlight)
+            {
+                foreach (Node neighbour in n.Neighbours)
+                {
+                    if (!finalMovementHighlight.Contains(neighbour))
+                    {
+                        cost[neighbour.X, neighbour.Y] = CostToEnterTile(neighbour.X, neighbour.Y) + cost[n.X, n.Y];
+
+                        if (moveSpeed - cost[neighbour.X, neighbour.Y] >= 0)
+                        {
+                            tempUIHighlight.Add(neighbour); 
+                        }
+                    }
+                }
+
+                uiHighlight = tempUIHighlight;
+                finalMovementHighlight.UnionWith(uiHighlight);
+                tempUIHighlight = new HashSet<Node>();
+            }
+        }
+
+        Debug.Log("The total amount of movable space for this character is: " + finalMovementHighlight.Count);
+        return finalMovementHighlight;
+    }
+    
+    // In:  || Out: returns a set of nodes that are all the attackable tiles from the char's current position
+    public HashSet<Node> GetCharAttackOptionsFromPos()
+    {
+        HashSet<Node> tempNeighbourHash = new HashSet<Node>();
+        HashSet<Node> neighbourHash = new HashSet<Node>();
+        HashSet<Node> seenNodes = new HashSet<Node>();
+        Node initialNode = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
+            selectedChar.GetComponent<PlayerMovement>().y];
+        int attRange = selectedChar.GetComponent<PlayerMovement>().attackRange;
+
+        neighbourHash = new HashSet<Node>();
+        neighbourHash.Add(initialNode);
+        for (int i = 0; i < attRange; i++)
+        {
+            foreach (Node t in neighbourHash)
+            {
+                foreach (Node tn in t.Neighbours)
+                {
+                    tempNeighbourHash.Add(tn);
+                }
+            }
+            neighbourHash = tempNeighbourHash;
+            tempNeighbourHash = new HashSet<Node>();
+            if (i < attRange - 1)
+            {
+                seenNodes.UnionWith(neighbourHash);
+            }
+        }
+        neighbourHash.ExceptWith(seenNodes);
+        neighbourHash.Remove(initialNode);
+
+        return neighbourHash;
+    }
+    
+    // In: finalMovement highlight, the attack range of the char, initial node that the char was standing on
+    // Out: returns a set of nodes that represent the char's total attackable tiles
+    public HashSet<Node> GetCharTotalAttackableTiles(HashSet<Node> finalMovementHighlight, int attRange, Node charInitialNode)
+    {
+        HashSet<Node> tempNeighbourHash = new HashSet<Node>();
+        HashSet<Node> neighbourHash = new HashSet<Node>();
+        HashSet<Node> seenNodes = new HashSet<Node>();
+        HashSet<Node> totalAttackableTiles = new HashSet<Node>();
+
+        foreach (Node n in finalMovementHighlight)
+        {
+            neighbourHash = new HashSet<Node>();
+            neighbourHash.Add(n);
+            for (int i = 0; i < attRange; i++)
+            {
+                foreach (Node t in neighbourHash)
+                {
+                    foreach (Node tn in t.Neighbours)
+                    {
+                        tempNeighbourHash.Add(tn);
+                    }
+                }
+                neighbourHash = tempNeighbourHash;
+                tempNeighbourHash = new HashSet<Node>();
+                if (i < attRange - 1)
+                {
+                    seenNodes.UnionWith(neighbourHash);
+                }
+            }
+            neighbourHash.ExceptWith(seenNodes);
+            tempNeighbourHash = new HashSet<Node>();
+            totalAttackableTiles.UnionWith(neighbourHash);
+        }
+
+        totalAttackableTiles.Remove(charInitialNode);
+
+        return totalAttackableTiles;
+    }
+    
+    // In: finalMovmentHighlight, totalAttackableTiles
+    // Out: returns a hashset combination of two inputs
+    public HashSet<Node> GetCharTotalRange(HashSet<Node> finalMovementHighlight, HashSet<Node> totalAttackableTiles)
+    {
+        HashSet<Node> unionTiles = new HashSet<Node>();
+        unionTiles.UnionWith(finalMovementHighlight);
+        unionTiles.UnionWith(totalAttackableTiles);
+
+        return unionTiles;
+    }
+    
+    // Highlights the selected char's options
+    public void HighlightTileCharIsOccupying()
+    {
+        if (selectedChar != null)
+        {
+            HighlightMovementRange(GetTileCharIsOccupying()); 
+        }
+    }
+    
+    // Highlights the selected char's movement range to visualise
+    public void HighlightMovementRange(HashSet<Node> movementToHighlight)
+    {
+        foreach (Node n in movementToHighlight)
+        {
+            _map.QuadOnMap[n.X, n.Y].GetComponent<Renderer>().material = blueUIMat;
+            _map.QuadOnMap[n.X, n.Y].GetComponent<MeshRenderer>().enabled = true;
+        }
+    }
+    
+    // Highlights char's range options
+    public void HighlightCharRange()
+    {
+        HashSet<Node> finalMovementHighlight = new HashSet<Node>();
+        HashSet<Node> totalAttackableTiles = new HashSet<Node>();
+        HashSet<Node> finalEnemyInMoveRange = new HashSet<Node>();
+        
+        int attRange = selectedChar.GetComponent<PlayerMovement>().attackRange;
+        int moveSpeed = selectedChar.GetComponent<PlayerMovement>().moveSpeed;
+
+        Node charInitialNode = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
+            selectedChar.GetComponent<PlayerMovement>().y];
+        finalMovementHighlight = GetCharMovementOptions();
+        totalAttackableTiles = GetCharTotalAttackableTiles(finalMovementHighlight, attRange, charInitialNode);
+
+        foreach (Node n in totalAttackableTiles)
+        {
+            if (_map.TilesOnMap[n.X, n.Y].GetComponent<Tile>().charOnTile != null)
+            {
+                GameObject charOnCurrSelectedTile = _map.TilesOnMap[n.X, n.Y].GetComponent<Tile>().charOnTile;
+                if (charOnCurrSelectedTile.GetComponent<PlayerMovement>().teamNo !=
+                    _player.GetComponent<PlayerMovement>().teamNo)
+                {
+                    finalEnemyInMoveRange.Add(n);
+                }
+            }
+        }
+        
+        HighlightEnemiesInRange(totalAttackableTiles);
+        HighlightMovementRange(finalMovementHighlight);
+
+        SelectedCharMoveRange = finalMovementHighlight;
+        SelectedCharTotalRange = GetCharTotalRange(finalMovementHighlight, totalAttackableTiles);
+    }
+    
+    // Highlights the selected char's attackOptions from its position
+    public void HighlightCharAttackOptionsFromPos()
+    {
+        if (selectedChar != null)
+        {
+            HighlightEnemiesInRange(GetCharAttackOptionsFromPos());
+        }
+    }
+
+        // Highlights the enemies in range once they've been added to a hashset 
+    public void HighlightEnemiesInRange(HashSet<Node> enemiesToHighlight)
+    {
+        foreach (Node n in enemiesToHighlight)
+        {
+            _map.QuadOnMap[n.X, n.Y].GetComponent<Renderer>().material = redUIMat;
+            _map.QuadOnMap[n.X, n.Y].GetComponent<MeshRenderer>().enabled = true;
+
+        }
     }
 }
