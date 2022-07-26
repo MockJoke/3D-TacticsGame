@@ -10,7 +10,7 @@ public class Node
   
   // Edges 
   public Node()
-  {
+  { 
     Neighbours = new List<Node>(); 
   }
 }  

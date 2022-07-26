@@ -810,6 +810,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f22f3e079a7d1fa4d9c0ec579f2feade, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 906464625}
   charsOnBoard: {fileID: 1474314463}
   selectedChar: {fileID: 0}
   charSelected: 0
@@ -838,6 +839,7 @@ MonoBehaviour:
   selectedXTile: 0
   selectedYTile: 0
   tileBeingDisplayed: {fileID: 0}
+  charPathExists: 0
 --- !u!1 &764704478
 GameObject:
   m_ObjectHideFlags: 0

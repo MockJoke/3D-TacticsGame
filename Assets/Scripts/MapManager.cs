@@ -1,15 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Net.Cache;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 public class MapManager : MonoBehaviour
 {
     private MapGenerator _map;
-    private PlayerMovement _player;
+    public PlayerMovement player;
     private GameManager _gameManager;
 
     public GameObject charsOnBoard; 
@@ -38,7 +36,7 @@ public class MapManager : MonoBehaviour
     void Start()
     {
         _map = GetComponent<MapGenerator>();
-        _player = GetComponent<PlayerMovement>();
+        player = player.GetComponent<PlayerMovement>();
         _gameManager = GetComponent<GameManager>();
     }
 
@@ -53,20 +51,20 @@ public class MapManager : MonoBehaviour
             }
             
             // Once the char has been selected, need to check if the unit has entered the selection state (1) 'Selected'; if yes then move the unit
-            else if (_player.charMoveState == _player.GetMovementStates(1) && _player.MovementQueue.Count == 0)
+            else if (player.charMoveState == player.GetMovementStates(1) && player.MovementQueue.Count == 0)
             {
                 if (SelectTileToMoveTo())
                 {
                     Debug.Log("Movement path has been selected");
-                    charSelectedPrevX = _player.x;
-                    charSelectedPrevY = _player.y;
-                    prevOccupiedTile = _player.tileBeingOccupied;
+                    charSelectedPrevX = player.x;
+                    charSelectedPrevY = player.y;
+                    prevOccupiedTile = player.tileBeingOccupied;
                     _gameManager.MoveChar();
 
-                    StartCoroutine(_player.MoveCharAndFinalise()); 
+                    StartCoroutine(player.MoveCharAndFinalise()); 
                 }
                 // Finalise the movement
-                else if(_player.charMoveState == _player.GetMovementStates(2))
+                else if(player.charMoveState == player.GetMovementStates(2))
                 {
                     //finaliseOption();
                 }
@@ -80,7 +78,7 @@ public class MapManager : MonoBehaviour
     }
 
     // Selects a character based on the cursor click
-    public void MouseClickToSelectChar()
+    private void MouseClickToSelectChar()
     {
         if (charSelected == false && _gameManager.tileBeingDisplayed != null)
         {
@@ -198,7 +196,7 @@ public class MapManager : MonoBehaviour
         }
 
         selectedChar.GetComponent<PlayerMovement>().Path = null;
-        _player.CurrentPath = null; 
+        player.CurrentPath = null; 
         
         // Path finding algorithm
         Dictionary<Node, float> dist = new Dictionary<Node, float>();
@@ -257,20 +255,20 @@ public class MapManager : MonoBehaviour
             return;
         }
 
-        _player.CurrentPath = new List<Node>();
+        player.CurrentPath = new List<Node>();
         Node curr = target;
         
         // Step through the current path and add it to the chain
         while (curr != null)
         {
-            _player.CurrentPath.Add(curr);
+            player.CurrentPath.Add(curr);
             curr = prev[curr];
         }
         
         // Currently currPath is from target to our source, need to reverse it from source to target
-        _player.CurrentPath.Reverse();
+        player.CurrentPath.Reverse();
 
-        selectedChar.GetComponent<PlayerMovement>().Path = _player.CurrentPath; 
+        selectedChar.GetComponent<PlayerMovement>().Path = player.CurrentPath; 
     }
     
     // In:  || Out: returns a set of nodes of the tile that the character is occupying
@@ -460,7 +458,7 @@ public class MapManager : MonoBehaviour
             {
                 GameObject charOnCurrSelectedTile = _map.TilesOnMap[n.X, n.Y].GetComponent<Tile>().charOnTile;
                 if (charOnCurrSelectedTile.GetComponent<PlayerMovement>().teamNo !=
-                    _player.GetComponent<PlayerMovement>().teamNo)
+                    player.GetComponent<PlayerMovement>().teamNo)
                 {
                     finalEnemyInMoveRange.Add(n);
                 }

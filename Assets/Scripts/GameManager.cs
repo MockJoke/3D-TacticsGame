@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
     
     public GameObject tileBeingDisplayed;
 
+    public bool charPathExists;
+
 
     void Start()
     {
@@ -38,11 +40,31 @@ public class GameManager : MonoBehaviour
        if (Physics.Raycast(_ray, out _hit))
        {
           CursorUIUpdate();
+          
+          // If the char is selected, highlight the current path with the UI
+          if (_mapManager.selectedChar != null &&
+              _mapManager.selectedChar.GetComponent<PlayerMovement>().GetMovementStates(1) ==
+              _mapManager.selectedChar.GetComponent<PlayerMovement>().charMoveState)
+          {
+              // check if the cursor is in range, can't show movement outside the range 
+              if (_mapManager.SelectedCharMoveRange.Contains(_mapGenerator.Graph[cursorX, cursorY]))
+              {
+                  if (cursorX != _mapManager.selectedChar.GetComponent<PlayerMovement>().x ||
+                      cursorY != _mapManager.selectedChar.GetComponent<PlayerMovement>().y)
+                  {
+                      if (!charPathExists &&
+                          _mapManager.selectedChar.GetComponent<PlayerMovement>().MovementQueue.Count == 0)
+                      {
+                          
+                      }
+                  } 
+              }
+          }
        }
     }
    
    // Updates the cursor for the UI
-   public void CursorUIUpdate() 
+   private void CursorUIUpdate() 
    { 
        // If hovering mouse over a tile, highlight it
        if (_hit.transform.CompareTag("Tile")) 
@@ -75,12 +97,12 @@ public class GameManager : MonoBehaviour
        { 
            if (tileBeingDisplayed == null) 
            { 
-               selectedXTile = _hit.transform.GetComponent<Tile>().tileX; 
-               selectedYTile = _hit.transform.GetComponent<Tile>().tileY; 
+               selectedXTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().x; 
+               selectedYTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().y; 
                cursorX = selectedXTile; 
                cursorY = selectedYTile; 
                _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true; 
-               tileBeingDisplayed = _hit.transform.gameObject;
+               tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().tileBeingOccupied;
            }
            else if (tileBeingDisplayed != _hit.transform.gameObject)
            {
@@ -90,12 +112,12 @@ public class GameManager : MonoBehaviour
                    selectedYTile = tileBeingDisplayed.transform.GetComponent<Tile>().tileY;
                    _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = false;
 
-                   selectedXTile = _hit.transform.GetComponent<Tile>().tileX;
-                   selectedYTile = _hit.transform.GetComponent<Tile>().tileY;
+                   selectedXTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().x; 
+                   selectedYTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().y;
                    cursorX = selectedXTile;
                    cursorY = selectedYTile;
                    _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true;
-                   tileBeingDisplayed = _hit.transform.gameObject;
+                   tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().tileBeingOccupied;
                }
            }
        }

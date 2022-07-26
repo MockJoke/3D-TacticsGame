@@ -1,15 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 // Responsible for generation of the Grid Map
 public class MapGenerator : MonoBehaviour
 {
     // List of tiles that are used to generate the map
-    [Header("Tiles")] public TileType[] tileTypes;
+    [Header("Tiles")] 
+    public TileType[] tileTypes;
     public int[,] Tiles;
 
     // Node graph for path finding purposes
@@ -19,10 +17,11 @@ public class MapGenerator : MonoBehaviour
     [HideInInspector] public int mapSizeY = 10;
 
     // Parent GameObjects (Containers) for the tiles
-    [Header("Containers")] public GameObject tileContainer;
-    [FormerlySerializedAs("UIQuadPossibleMovesContainer")] public GameObject uiQuadPossibleMovesContainer;
-    [FormerlySerializedAs("UIQuadCursorPointsContainer")] public GameObject uiQuadCursorPointsContainer;
-    [FormerlySerializedAs("UICharMovementIndicatorContainer")] public GameObject uiCharMovementIndicatorContainer;
+    [Header("Containers")] 
+    public GameObject tileContainer;
+    public GameObject uiQuadPossibleMovesContainer;
+    public GameObject uiQuadCursorPointsContainer;
+    public GameObject uiCharMovementIndicatorContainer;
 
     // 2D array list of tile gameobjects on the board
     public GameObject[,] TilesOnMap;
@@ -30,10 +29,8 @@ public class MapGenerator : MonoBehaviour
     [Header("mapUI Objects")]
     // Gameobject that's used to overlay onto the tiles to show possible movements
     public GameObject mapUI;
-
     //Game object that is used to highlight the mouse location
     public GameObject mapCursorUI;
-
     //Game object that is used to highlight the path the unit is taking
     public GameObject mapCharMovementUI;
 
@@ -145,7 +142,7 @@ public class MapGenerator : MonoBehaviour
         {
             for (int y = 0; y < mapSizeY; y++)
             {
-                if (x < 0)
+                if (x > 0)
                 {
                     Graph[x, y].Neighbours.Add(Graph[x - 1, y]);
                 }
@@ -155,7 +152,7 @@ public class MapGenerator : MonoBehaviour
                     Graph[x, y].Neighbours.Add(Graph[x + 1, y]);
                 }
 
-                if (y < 0)
+                if (y > 0)
                 {
                     Graph[x, y].Neighbours.Add(Graph[x, y - 1]);
                 }

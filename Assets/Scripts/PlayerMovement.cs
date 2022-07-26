@@ -161,4 +161,17 @@ public class PlayerMovement : MonoBehaviour
         tileBeingOccupied = map.TilesOnMap[x, y];
         MovementQueue.Dequeue();
     }
+
+    public void MoveAgain()
+    {
+        Path = null;
+        SetMovementStates(0);
+        completedMovement = false;
+    }
+
+    public void ResetPath()
+    {
+        Path = null;
+        completedMovement = false;
+    }
 }
