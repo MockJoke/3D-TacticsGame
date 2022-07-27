@@ -41,7 +41,8 @@ public class MapGenerator : MonoBehaviour
 
     void Start()
     {
-        MapManager mapManager = GetComponent<MapManager>(); 
+        MapManager mapManager = GetComponent<MapManager>();
+        GameManager gameManager = GetComponent<GameManager>();
         // Generate the map info that will be used
         GenerateMapInfo();
         // Generate path finding graph

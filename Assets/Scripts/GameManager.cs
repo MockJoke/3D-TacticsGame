@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
     public GameObject map;
     private MapGenerator _mapGenerator;
     private MapManager _mapManager;
-    public PlayerMovement player;
+    public CharacterController player;
     
     // Raycast for the update of charHover info
     private Ray _ray;
@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
     public int selectedYTile;
     
     public GameObject tileBeingDisplayed;
-
+    //public bool isTileOccupied = false; 
     public bool charPathExists;
     
     // var for charPotentialMovementRoute
@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
     {
        _mapManager = map.GetComponent<MapManager>();
        _mapGenerator = map.GetComponent<MapGenerator>();
-       player = player.GetComponent<PlayerMovement>();
+       player = player.GetComponent<CharacterController>();
 
        charPathToCursor = new List<Node>();
        charPathExists = false;
@@ -58,17 +58,17 @@ public class GameManager : MonoBehaviour
           
           // If the char is selected, highlight the current path with the UI
           if (_mapManager.selectedChar != null &&
-              _mapManager.selectedChar.GetComponent<PlayerMovement>().GetMovementStates(1) ==
-              _mapManager.selectedChar.GetComponent<PlayerMovement>().charMoveState)
+              _mapManager.selectedChar.GetComponent<CharacterController>().GetMovementStates(1) ==
+              _mapManager.selectedChar.GetComponent<CharacterController>().charMoveState)
           {
               // check if the cursor is in range, can't show movement outside the range 
               if (_mapManager.SelectedCharMoveRange.Contains(_mapGenerator.Graph[cursorX, cursorY]))
               {
-                  if (cursorX != _mapManager.selectedChar.GetComponent<PlayerMovement>().x ||
-                      cursorY != _mapManager.selectedChar.GetComponent<PlayerMovement>().y)
+                  if (cursorX != _mapManager.selectedChar.GetComponent<CharacterController>().x ||
+                      cursorY != _mapManager.selectedChar.GetComponent<CharacterController>().y)
                   {
                       if (!charPathExists &&
-                          _mapManager.selectedChar.GetComponent<PlayerMovement>().MovementQueue.Count == 0)
+                          _mapManager.selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 0)
                       {
                           charPathToCursor = GenerateCursorRouteTo(cursorX, cursorY);
 
@@ -119,8 +119,8 @@ public class GameManager : MonoBehaviour
                           }
                           charPathExists = false; 
                       }
-                      else if (cursorX == _mapManager.selectedChar.GetComponent<PlayerMovement>().x &&
-                               cursorY == _mapManager.selectedChar.GetComponent<PlayerMovement>().y)
+                      else if (cursorX == _mapManager.selectedChar.GetComponent<CharacterController>().x &&
+                               cursorY == _mapManager.selectedChar.GetComponent<CharacterController>().y)
                       {
                           _mapManager.DisableCharUIRoute();
                           charPathExists = false;
@@ -165,27 +165,27 @@ public class GameManager : MonoBehaviour
         { 
             if (tileBeingDisplayed == null) 
             { 
-                selectedXTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().x; 
-                selectedYTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().y; 
+                selectedXTile = _hit.transform.parent.gameObject.GetComponent<CharacterController>().x; 
+                selectedYTile = _hit.transform.parent.gameObject.GetComponent<CharacterController>().y; 
                 cursorX = selectedXTile; 
                 cursorY = selectedYTile; 
                 _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true; 
-                tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().tileBeingOccupied;
+                tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<CharacterController>().tileBeingOccupied;
             }
             else if (tileBeingDisplayed != _hit.transform.gameObject)
             {
-                if (_hit.transform.parent.gameObject.GetComponent<PlayerMovement>().MovementQueue.Count == 0)
+                if (_hit.transform.parent.gameObject.GetComponent<CharacterController>().MovementQueue.Count == 0)
                 {
                     selectedXTile = tileBeingDisplayed.transform.GetComponent<Tile>().tileX;
                     selectedYTile = tileBeingDisplayed.transform.GetComponent<Tile>().tileY;
                     _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = false;
  
-                    selectedXTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().x; 
-                    selectedYTile = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().y;
+                    selectedXTile = _hit.transform.parent.gameObject.GetComponent<CharacterController>().x; 
+                    selectedYTile = _hit.transform.parent.gameObject.GetComponent<CharacterController>().y;
                     cursorX = selectedXTile;
                     cursorY = selectedYTile;
                     _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true;
-                    tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<PlayerMovement>().tileBeingOccupied;
+                    tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<CharacterController>().tileBeingOccupied;
                 }
             }
         }
@@ -201,8 +201,8 @@ public class GameManager : MonoBehaviour
     // generate the cursor route to a position x, y
     public List<Node> GenerateCursorRouteTo(int x, int y)
     {
-        if (_mapManager.selectedChar.GetComponent<PlayerMovement>().x == x &&
-            _mapManager.selectedChar.GetComponent<PlayerMovement>().y == y)
+        if (_mapManager.selectedChar.GetComponent<CharacterController>().x == x &&
+            _mapManager.selectedChar.GetComponent<CharacterController>().y == y)
         {
             Debug.Log("Clicked the same tile as the character is standing on");
             currPathForCharRoute = new List<Node>();
@@ -218,8 +218,8 @@ public class GameManager : MonoBehaviour
         currPathForCharRoute = null;
         Dictionary<Node, float> dist = new Dictionary<Node, float>();
         Dictionary<Node, Node> prev = new Dictionary<Node, Node>();
-        Node source = _mapGenerator.Graph[_mapManager.selectedChar.GetComponent<PlayerMovement>().x,
-            _mapManager.selectedChar.GetComponent<PlayerMovement>().y];
+        Node source = _mapGenerator.Graph[_mapManager.selectedChar.GetComponent<CharacterController>().x,
+            _mapManager.selectedChar.GetComponent<CharacterController>().y];
         Node target = _mapGenerator.Graph[x, y];
         dist[source] = 0;
         prev[source] = null;
@@ -456,7 +456,16 @@ public class GameManager : MonoBehaviour
     {
        if (_mapManager.selectedChar != null)
        {
-          _mapManager.selectedChar.GetComponent<PlayerMovement>().MoveNextTile();
+           if (_mapManager.selectedChar.GetComponent<CharacterController>().teamNo == CharacterController.Team.Player)
+           {
+               _mapManager.selectedChar.GetComponent<CharacterController>().MoveNextTile();
+           }
+           else if (_mapManager.selectedChar.GetComponent<CharacterController>().teamNo ==
+                    CharacterController.Team.Enemy)
+           {
+               
+           }
+          
        }
     }
 }

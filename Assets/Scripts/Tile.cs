@@ -9,7 +9,9 @@ public class Tile : MonoBehaviour
     public int tileY;
     
     // The character on the tile
-    public GameObject charOnTile; 
+    public GameObject charOnTile;
+    
+    public bool isTileOccupied = false; 
     
     public MapGenerator map;
 }

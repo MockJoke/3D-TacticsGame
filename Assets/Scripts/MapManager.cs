@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 public class MapManager : MonoBehaviour
 {
     private MapGenerator _map;
-    public PlayerMovement player;
+    public CharacterController player;
     private GameManager _gameManager;
 
     public GameObject charsOnBoard; 
@@ -36,7 +36,7 @@ public class MapManager : MonoBehaviour
     void Start()
     {
         _map = GetComponent<MapGenerator>();
-        player = player.GetComponent<PlayerMovement>();
+        player = player.GetComponent<CharacterController>();
         _gameManager = GetComponent<GameManager>();
     }
 
@@ -75,17 +75,17 @@ public class MapManager : MonoBehaviour
         {
             if (selectedChar != null)
             {
-                if (selectedChar.GetComponent<PlayerMovement>().MovementQueue.Count == 0)
+                if (selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 0)
                 {
-                    if (selectedChar.GetComponent<PlayerMovement>().charMoveState !=
-                        selectedChar.GetComponent<PlayerMovement>().GetMovementStates(3))
+                    if (selectedChar.GetComponent<CharacterController>().charMoveState !=
+                        selectedChar.GetComponent<CharacterController>().GetMovementStates(3))
                     {
                         DeselectChar();
                     }
                 }
-                else if (selectedChar.GetComponent<PlayerMovement>().MovementQueue.Count == 1)
+                else if (selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 1)
                 {
-                    selectedChar.GetComponent<PlayerMovement>().visualMoveSpeed = 0.5f;
+                    selectedChar.GetComponent<CharacterController>().visualMoveSpeed = 0.5f;
                 }
             }
         }
@@ -100,12 +100,12 @@ public class MapManager : MonoBehaviour
             {
                 GameObject tempSelectedChar = _gameManager.tileBeingDisplayed.GetComponent<Tile>().charOnTile;
 
-                if (tempSelectedChar.GetComponent<PlayerMovement>().charMoveState == tempSelectedChar
-                        .GetComponent<PlayerMovement>().GetComponent<PlayerMovement>().GetMovementStates(0))
+                if (tempSelectedChar.GetComponent<CharacterController>().charMoveState == tempSelectedChar
+                        .GetComponent<CharacterController>().GetComponent<CharacterController>().GetMovementStates(0))
                 {
                     selectedChar = tempSelectedChar;
-                    selectedChar.GetComponent<PlayerMovement>().map = _map;
-                    selectedChar.GetComponent<PlayerMovement>().SetMovementStates(1);
+                    selectedChar.GetComponent<CharacterController>().map = _map;
+                    selectedChar.GetComponent<CharacterController>().SetMovementStates(1);
                     charSelected = true;
                     HighlightCharRange();
                 }
@@ -141,14 +141,14 @@ public class MapManager : MonoBehaviour
         }
         else if(hit.transform.gameObject.CompareTag("Player"))
         {
-            if (hit.transform.parent.GetComponent<PlayerMovement>().teamNo !=
-                selectedChar.GetComponent<PlayerMovement>().teamNo)
+            if (hit.transform.parent.GetComponent<CharacterController>().teamNo !=
+                selectedChar.GetComponent<CharacterController>().teamNo)
             {
                 Debug.Log("Clicked an enemy");
             }
             else if (hit.transform.parent.gameObject == selectedChar)
             {
-                GeneratePathTo(selectedChar.GetComponent<PlayerMovement>().x, selectedChar.GetComponent<PlayerMovement>().y);
+                GeneratePathTo(selectedChar.GetComponent<CharacterController>().x, selectedChar.GetComponent<CharacterController>().y);
                 
                 return true;
             }
@@ -164,10 +164,11 @@ public class MapManager : MonoBehaviour
         {
             foreach (Transform charOnTeam in team)
             {
-                int charX = charOnTeam.GetComponent<PlayerMovement>().x;
-                int charY = charOnTeam.GetComponent<PlayerMovement>().y;
-                charOnTeam.GetComponent<PlayerMovement>().tileBeingOccupied = _map.TilesOnMap[charX, charY];
+                int charX = charOnTeam.GetComponent<CharacterController>().x;
+                int charY = charOnTeam.GetComponent<CharacterController>().y;
+                charOnTeam.GetComponent<CharacterController>().tileBeingOccupied = _map.TilesOnMap[charX, charY];
                 _map.TilesOnMap[charX, charY].GetComponent<Tile>().charOnTile = charOnTeam.gameObject;
+                _map.TilesOnMap[charX, charY].GetComponent<Tile>().isTileOccupied = true;
             }
         }
     }
@@ -177,8 +178,8 @@ public class MapManager : MonoBehaviour
     {
         if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile != null)
         {
-            if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile.GetComponent<PlayerMovement>().teamNo !=
-                selectedChar.GetComponent<PlayerMovement>().teamNo)
+            if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile.GetComponent<CharacterController>().teamNo !=
+                selectedChar.GetComponent<CharacterController>().teamNo)
             {
                 return false;
             }
@@ -203,20 +204,20 @@ public class MapManager : MonoBehaviour
     // Generates path for the selected character
     public void GeneratePathTo(int x, int y)
     {
-        if (selectedChar.GetComponent<PlayerMovement>().x == x &&
-            selectedChar.GetComponent<PlayerMovement>().y == y)
+        if (selectedChar.GetComponent<CharacterController>().x == x &&
+            selectedChar.GetComponent<CharacterController>().y == y)
         {
             Debug.Log("Clicked the same tile that the character currently standing on"); 
         }
 
-        selectedChar.GetComponent<PlayerMovement>().Path = null;
+        selectedChar.GetComponent<CharacterController>().Path = null;
         player.CurrentPath = null; 
         
         // Path finding algorithm
         Dictionary<Node, float> dist = new Dictionary<Node, float>();
         Dictionary<Node, Node> prev = new Dictionary<Node, Node>();
-        Node source = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
-            selectedChar.GetComponent<PlayerMovement>().y];
+        Node source = _map.Graph[selectedChar.GetComponent<CharacterController>().x,
+            selectedChar.GetComponent<CharacterController>().y];
         Node target = _map.Graph[x, y];
         dist[source] = 0;
         prev[source] = null;
@@ -282,14 +283,14 @@ public class MapManager : MonoBehaviour
         // Currently currPath is from target to our source, need to reverse it from source to target
         player.CurrentPath.Reverse();
 
-        selectedChar.GetComponent<PlayerMovement>().Path = player.CurrentPath; 
+        selectedChar.GetComponent<CharacterController>().Path = player.CurrentPath; 
     }
     
     // In:  || Out: returns a set of nodes of the tile that the character is occupying
     public HashSet<Node> GetTileCharIsOccupying()
     {
-        int x = selectedChar.GetComponent<PlayerMovement>().x;
-        int y = selectedChar.GetComponent<PlayerMovement>().y;
+        int x = selectedChar.GetComponent<CharacterController>().x;
+        int y = selectedChar.GetComponent<CharacterController>().y;
         HashSet<Node> charTile = new HashSet<Node>();
         charTile.Add(_map.Graph[x, y]);
         return charTile;
@@ -304,10 +305,10 @@ public class MapManager : MonoBehaviour
         HashSet<Node> tempUIHighlight = new HashSet<Node>();
         HashSet<Node> finalMovementHighlight = new HashSet<Node>();
 
-        int moveSpeed = selectedChar.GetComponent<PlayerMovement>().moveSpeed;
+        int moveSpeed = selectedChar.GetComponent<CharacterController>().moveSpeed;
 
-        Node charInitialNode = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
-            selectedChar.GetComponent<PlayerMovement>().y];
+        Node charInitialNode = _map.Graph[selectedChar.GetComponent<CharacterController>().x,
+            selectedChar.GetComponent<CharacterController>().y];
         
         // Setup the initial costs for the neighbouring nodes
         finalMovementHighlight.Add(charInitialNode);
@@ -354,9 +355,9 @@ public class MapManager : MonoBehaviour
         HashSet<Node> tempNeighbourHash = new HashSet<Node>();
         HashSet<Node> neighbourHash = new HashSet<Node>();
         HashSet<Node> seenNodes = new HashSet<Node>();
-        Node initialNode = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
-            selectedChar.GetComponent<PlayerMovement>().y];
-        int attRange = selectedChar.GetComponent<PlayerMovement>().attackRange;
+        Node initialNode = _map.Graph[selectedChar.GetComponent<CharacterController>().x,
+            selectedChar.GetComponent<CharacterController>().y];
+        int attRange = selectedChar.GetComponent<CharacterController>().attackRange;
 
         neighbourHash = new HashSet<Node>();
         neighbourHash.Add(initialNode);
@@ -458,11 +459,11 @@ public class MapManager : MonoBehaviour
         HashSet<Node> totalAttackableTiles = new HashSet<Node>();
         HashSet<Node> finalEnemyInMoveRange = new HashSet<Node>();
         
-        int attRange = selectedChar.GetComponent<PlayerMovement>().attackRange;
-        int moveSpeed = selectedChar.GetComponent<PlayerMovement>().moveSpeed;
+        int attRange = selectedChar.GetComponent<CharacterController>().attackRange;
+        int moveSpeed = selectedChar.GetComponent<CharacterController>().moveSpeed;
 
-        Node charInitialNode = _map.Graph[selectedChar.GetComponent<PlayerMovement>().x,
-            selectedChar.GetComponent<PlayerMovement>().y];
+        Node charInitialNode = _map.Graph[selectedChar.GetComponent<CharacterController>().x,
+            selectedChar.GetComponent<CharacterController>().y];
         finalMovementHighlight = GetCharMovementOptions();
         totalAttackableTiles = GetCharTotalAttackableTiles(finalMovementHighlight, attRange, charInitialNode);
 
@@ -471,8 +472,8 @@ public class MapManager : MonoBehaviour
             if (_map.TilesOnMap[n.X, n.Y].GetComponent<Tile>().charOnTile != null)
             {
                 GameObject charOnCurrSelectedTile = _map.TilesOnMap[n.X, n.Y].GetComponent<Tile>().charOnTile;
-                if (charOnCurrSelectedTile.GetComponent<PlayerMovement>().teamNo !=
-                    player.GetComponent<PlayerMovement>().teamNo)
+                if (charOnCurrSelectedTile.GetComponent<CharacterController>().teamNo !=
+                    player.GetComponent<CharacterController>().teamNo)
                 {
                     finalEnemyInMoveRange.Add(n);
                 }
@@ -511,17 +512,17 @@ public class MapManager : MonoBehaviour
     {
         if (selectedChar != null)
         {
-            if (selectedChar.GetComponent<PlayerMovement>().charMoveState ==
-                selectedChar.GetComponent<PlayerMovement>().GetMovementStates(1))
+            if (selectedChar.GetComponent<CharacterController>().charMoveState ==
+                selectedChar.GetComponent<CharacterController>().GetMovementStates(1))
             {
                 DisableHighlightCharRange();
                 DisableCharUIRoute();
-                selectedChar.GetComponent<PlayerMovement>().SetMovementStates(0);
+                selectedChar.GetComponent<CharacterController>().SetMovementStates(0);
 
                 selectedChar = null;
                 charSelected = false;
             }
-            else if (selectedChar.GetComponent<PlayerMovement>().charMoveState == selectedChar.GetComponent<PlayerMovement>().GetMovementStates(3))
+            else if (selectedChar.GetComponent<CharacterController>().charMoveState == selectedChar.GetComponent<CharacterController>().GetMovementStates(3))
             {
                 DisableHighlightCharRange();
                 DisableCharUIRoute();
@@ -533,15 +534,15 @@ public class MapManager : MonoBehaviour
             {
                 DisableHighlightCharRange();
                 DisableCharUIRoute();
-                _map.TilesOnMap[selectedChar.GetComponent<PlayerMovement>().x,
-                    selectedChar.GetComponent<PlayerMovement>().y].GetComponent<Tile>().charOnTile = null;
+                _map.TilesOnMap[selectedChar.GetComponent<CharacterController>().x,
+                    selectedChar.GetComponent<CharacterController>().y].GetComponent<Tile>().charOnTile = null;
                 _map.TilesOnMap[charSelectedPrevX, charSelectedPrevY].GetComponent<Tile>().charOnTile = selectedChar;
 
-                selectedChar.GetComponent<PlayerMovement>().x = charSelectedPrevX;
-                selectedChar.GetComponent<PlayerMovement>().y = charSelectedPrevY;
-                selectedChar.GetComponent<PlayerMovement>().tileBeingOccupied = prevOccupiedTile;
-                selectedChar.transform.position = _map.TileCoordToWorldCoord(charSelectedPrevX, charSelectedPrevY);
-                selectedChar.GetComponent<PlayerMovement>().SetMovementStates(0);
+                //selectedChar.GetComponent<PlayerMovement>().x = charSelectedPrevX;
+                //selectedChar.GetComponent<PlayerMovement>().y = charSelectedPrevY;
+                //selectedChar.GetComponent<PlayerMovement>().tileBeingOccupied = prevOccupiedTile;
+                //selectedChar.transform.position = _map.TileCoordToWorldCoord(charSelectedPrevX, charSelectedPrevY);
+                selectedChar.GetComponent<CharacterController>().SetMovementStates(0);
                 selectedChar = null;
                 charSelected = false;
             }
@@ -575,18 +576,18 @@ public class MapManager : MonoBehaviour
     // de-selects the selected char after the action has been taken
     public IEnumerator DeselectAfterMovements(GameObject charPlayer, GameObject charEnemy) 
     {
-        selectedChar.GetComponent<PlayerMovement>().SetMovementStates(3);
+        selectedChar.GetComponent<CharacterController>().SetMovementStates(3);
         DisableHighlightCharRange();
         DisableCharUIRoute();
 
         yield return new WaitForSeconds(.25f);
 
-        while (charPlayer.GetComponent<PlayerMovement>().CombatQueue.Count > 0) 
+        while (charPlayer.GetComponent<CharacterController>().CombatQueue.Count > 0) 
         {
             yield return new WaitForEndOfFrame();
         }
 
-        while (charEnemy.GetComponent<PlayerMovement>().CombatQueue.Count > 0)
+        while (charEnemy.GetComponent<CharacterController>().CombatQueue.Count > 0)
         {
             yield return new WaitForEndOfFrame();
         }
@@ -608,21 +609,21 @@ public class MapManager : MonoBehaviour
                 if (hit.transform.GetComponent<Tile>().charOnTile != null)
                 {
                     GameObject charOnTile = hit.transform.GetComponent<Tile>().charOnTile;
-                    int charX = charOnTile.GetComponent<PlayerMovement>().x;
-                    int charY = charOnTile.GetComponent<PlayerMovement>().y;
+                    int charX = charOnTile.GetComponent<CharacterController>().x;
+                    int charY = charOnTile.GetComponent<CharacterController>().y;
 
                     if (charOnTile == selectedChar)
                     {
                         DisableHighlightCharRange();
                         Debug.Log("It's the same character, just wait");
-                        selectedChar.GetComponent<PlayerMovement>().SetMovementStates(3);
+                        selectedChar.GetComponent<CharacterController>().SetMovementStates(3);
                         DeselectChar();
                     }
-                    else if (charOnTile.GetComponent<PlayerMovement>().teamNo !=
-                             selectedChar.GetComponent<PlayerMovement>().teamNo &&
+                    else if (charOnTile.GetComponent<CharacterController>().teamNo !=
+                             selectedChar.GetComponent<CharacterController>().teamNo &&
                              attackableTiles.Contains(_map.Graph[charX, charY]))
                     {
-                        if (charOnTile.GetComponent<PlayerMovement>().currHeathPoints > 0)
+                        if (charOnTile.GetComponent<CharacterController>().currHeathPoints > 0)
                         {
                             Debug.Log("Clicked an enemy that should be attacked");
 
@@ -634,21 +635,21 @@ public class MapManager : MonoBehaviour
             else if (hit.transform.parent != null && hit.transform.parent.gameObject.CompareTag("Player"))
             {
                 GameObject charClicked = hit.transform.parent.gameObject;
-                int charX = charClicked.GetComponent<PlayerMovement>().x;
-                int charY = charClicked.GetComponent<PlayerMovement>().y;
+                int charX = charClicked.GetComponent<CharacterController>().x;
+                int charY = charClicked.GetComponent<CharacterController>().y;
 
                 if (charClicked == selectedChar)
                 {
                     DisableHighlightCharRange();
                     Debug.Log("It's the same unit, just wait"); 
-                    selectedChar.GetComponent<PlayerMovement>().SetMovementStates(3);
+                    selectedChar.GetComponent<CharacterController>().SetMovementStates(3);
                     DeselectChar();
                 }
-                else if (charClicked.GetComponent<PlayerMovement>().teamNo !=
-                         selectedChar.GetComponent<PlayerMovement>().teamNo &&
+                else if (charClicked.GetComponent<CharacterController>().teamNo !=
+                         selectedChar.GetComponent<CharacterController>().teamNo &&
                          attackableTiles.Contains(_map.Graph[charX, charY]))
                 {
-                    if (charClicked.GetComponent<PlayerMovement>().currHeathPoints > 0)
+                    if (charClicked.GetComponent<CharacterController>().currHeathPoints > 0)
                     {
                         Debug.Log("Clicked an enemy that should be attacked");
 
