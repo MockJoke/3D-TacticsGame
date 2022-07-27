@@ -113,9 +113,13 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(MoveOverSeconds(transform.gameObject, Path[Path.Count - 1])); 
         }
     }
-
+    
+    // Moves the unit then finalises the movement
     public IEnumerator MoveCharAndFinalise()
     {
+        _mapManager.DisableHighlightCharRange();
+        _mapManager.DisableCharUIRoute();
+        
         while (MovementQueue.Count != 0)
         {
             yield return new WaitForEndOfFrame();

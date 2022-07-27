@@ -840,6 +840,12 @@ MonoBehaviour:
   selectedYTile: 0
   tileBeingDisplayed: {fileID: 0}
   charPathExists: 0
+  UICharRoute: {fileID: 2100000, guid: 87e2cae87752aa346b7fca1f7f374845, type: 2}
+  UICharRouteCurve: {fileID: 2100000, guid: c0233804405c24045ab22ab92c20ea75, type: 2}
+  UICharRouteArrow: {fileID: 2100000, guid: a94df98414259004db087021cc7ffc1e, type: 2}
+  UICursor: {fileID: 2100000, guid: 59365d361b18bb345bd51c65e48722b0, type: 2}
+  routeToX: 0
+  routeToY: 0
 --- !u!1 &764704478
 GameObject:
   m_ObjectHideFlags: 0

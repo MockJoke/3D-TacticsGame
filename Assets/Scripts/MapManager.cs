@@ -66,14 +66,28 @@ public class MapManager : MonoBehaviour
                 // Finalise the movement
                 else if(player.charMoveState == player.GetMovementStates(2))
                 {
-                    //finaliseOption();
+                    finaliseOption();
                 }
             }
         }
         // Deselect the char with the right click
         if (Input.GetMouseButtonDown(1))
         {
-            
+            if (selectedChar != null)
+            {
+                if (selectedChar.GetComponent<PlayerMovement>().MovementQueue.Count == 0)
+                {
+                    if (selectedChar.GetComponent<PlayerMovement>().charMoveState !=
+                        selectedChar.GetComponent<PlayerMovement>().GetMovementStates(3))
+                    {
+                        DeselectChar();
+                    }
+                }
+                else if (selectedChar.GetComponent<PlayerMovement>().MovementQueue.Count == 1)
+                {
+                    selectedChar.GetComponent<PlayerMovement>().visualMoveSpeed = 0.5f;
+                }
+            }
         }
     }
 
@@ -489,6 +503,159 @@ public class MapManager : MonoBehaviour
             _map.QuadOnMap[n.X, n.Y].GetComponent<Renderer>().material = redUIMat;
             _map.QuadOnMap[n.X, n.Y].GetComponent<MeshRenderer>().enabled = true;
 
+        }
+    }
+    
+    // de-selects the char
+    public void DeselectChar()
+    {
+        if (selectedChar != null)
+        {
+            if (selectedChar.GetComponent<PlayerMovement>().charMoveState ==
+                selectedChar.GetComponent<PlayerMovement>().GetMovementStates(1))
+            {
+                DisableHighlightCharRange();
+                DisableCharUIRoute();
+                selectedChar.GetComponent<PlayerMovement>().SetMovementStates(0);
+
+                selectedChar = null;
+                charSelected = false;
+            }
+            else if (selectedChar.GetComponent<PlayerMovement>().charMoveState == selectedChar.GetComponent<PlayerMovement>().GetMovementStates(3))
+            {
+                DisableHighlightCharRange();
+                DisableCharUIRoute();
+
+                selectedChar = null;
+                charSelected = false;
+            }
+            else
+            {
+                DisableHighlightCharRange();
+                DisableCharUIRoute();
+                _map.TilesOnMap[selectedChar.GetComponent<PlayerMovement>().x,
+                    selectedChar.GetComponent<PlayerMovement>().y].GetComponent<Tile>().charOnTile = null;
+                _map.TilesOnMap[charSelectedPrevX, charSelectedPrevY].GetComponent<Tile>().charOnTile = selectedChar;
+
+                selectedChar.GetComponent<PlayerMovement>().x = charSelectedPrevX;
+                selectedChar.GetComponent<PlayerMovement>().y = charSelectedPrevY;
+                selectedChar.GetComponent<PlayerMovement>().tileBeingOccupied = prevOccupiedTile;
+                selectedChar.transform.position = _map.TileCoordToWorldCoord(charSelectedPrevX, charSelectedPrevY);
+                selectedChar.GetComponent<PlayerMovement>().SetMovementStates(0);
+                selectedChar = null;
+                charSelected = false;
+            }
+        }
+    }
+    
+    // disables the highlight
+    public void DisableHighlightCharRange()
+    {
+        foreach (GameObject quad in _map.QuadOnMap)
+        {
+            if (quad.GetComponent<Renderer>().enabled == true)
+            {
+                quad.GetComponent<Renderer>().enabled = false;
+            }
+        }
+    }
+    
+    // disables the quads that are being used to highlight position 
+    public void DisableCharUIRoute()
+    {
+        foreach (GameObject quad in _map.QuadOnMapForCharMovement)
+        {
+            if (quad.GetComponent<Renderer>().enabled == true)
+            {
+                quad.GetComponent<Renderer>().enabled = false;
+            }
+        }
+    }
+    
+    // de-selects the selected char after the action has been taken
+    public IEnumerator DeselectAfterMovements(GameObject charPlayer, GameObject charEnemy) 
+    {
+        selectedChar.GetComponent<PlayerMovement>().SetMovementStates(3);
+        DisableHighlightCharRange();
+        DisableCharUIRoute();
+
+        yield return new WaitForSeconds(.25f);
+
+        while (charPlayer.GetComponent<PlayerMovement>().CombatQueue.Count > 0) 
+        {
+            yield return new WaitForEndOfFrame();
+        }
+
+        while (charEnemy.GetComponent<PlayerMovement>().CombatQueue.Count > 0)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        
+        DeselectChar();
+    }
+    
+    // Finalises the player's option 
+    public void finaliseOption()
+    {
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        HashSet<Node> attackableTiles = GetCharAttackOptionsFromPos();
+
+        if (Physics.Raycast(ray, out hit))
+        {
+            if (hit.transform.gameObject.CompareTag("Tile"))
+            {
+                if (hit.transform.GetComponent<Tile>().charOnTile != null)
+                {
+                    GameObject charOnTile = hit.transform.GetComponent<Tile>().charOnTile;
+                    int charX = charOnTile.GetComponent<PlayerMovement>().x;
+                    int charY = charOnTile.GetComponent<PlayerMovement>().y;
+
+                    if (charOnTile == selectedChar)
+                    {
+                        DisableHighlightCharRange();
+                        Debug.Log("It's the same character, just wait");
+                        selectedChar.GetComponent<PlayerMovement>().SetMovementStates(3);
+                        DeselectChar();
+                    }
+                    else if (charOnTile.GetComponent<PlayerMovement>().teamNo !=
+                             selectedChar.GetComponent<PlayerMovement>().teamNo &&
+                             attackableTiles.Contains(_map.Graph[charX, charY]))
+                    {
+                        if (charOnTile.GetComponent<PlayerMovement>().currHeathPoints > 0)
+                        {
+                            Debug.Log("Clicked an enemy that should be attacked");
+
+                            StartCoroutine(DeselectAfterMovements(selectedChar, charOnTile));
+                        }
+                    }
+                }
+            }
+            else if (hit.transform.parent != null && hit.transform.parent.gameObject.CompareTag("Player"))
+            {
+                GameObject charClicked = hit.transform.parent.gameObject;
+                int charX = charClicked.GetComponent<PlayerMovement>().x;
+                int charY = charClicked.GetComponent<PlayerMovement>().y;
+
+                if (charClicked == selectedChar)
+                {
+                    DisableHighlightCharRange();
+                    Debug.Log("It's the same unit, just wait"); 
+                    selectedChar.GetComponent<PlayerMovement>().SetMovementStates(3);
+                    DeselectChar();
+                }
+                else if (charClicked.GetComponent<PlayerMovement>().teamNo !=
+                         selectedChar.GetComponent<PlayerMovement>().teamNo &&
+                         attackableTiles.Contains(_map.Graph[charX, charY]))
+                {
+                    if (charClicked.GetComponent<PlayerMovement>().currHeathPoints > 0)
+                    {
+                        Debug.Log("Clicked an enemy that should be attacked");
+
+                        StartCoroutine(DeselectAfterMovements(selectedChar, charClicked));
+                    }
+                }
+            }
         }
     }
 }
