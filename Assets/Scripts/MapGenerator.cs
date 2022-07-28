@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,6 +39,11 @@ public class MapGenerator : MonoBehaviour
     public GameObject[,] QuadOnMap;
     public GameObject[,] QuadOnMapForCharMovement;
     public GameObject[,] QuadOnMapCursor;
+
+    [HideInInspector] 
+    public int ObstaclePosX;
+    public int obstaclePosY;
+    public int obstacleTt; 
 
     void Start()
     {

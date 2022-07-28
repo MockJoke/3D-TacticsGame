@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 { 
@@ -37,6 +38,11 @@ public class GameManager : MonoBehaviour
 
     public int routeToX;
     public int routeToY;
+
+    public Canvas GameCanvas;
+    public Text TilePosText;
+    public Text TileOccupiedText;
+    public Text TileMovementCostText; 
 
     void Start()
     {
@@ -144,7 +150,10 @@ public class GameManager : MonoBehaviour
                 cursorX = selectedXTile; 
                 cursorY = selectedYTile; 
                 _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true; 
-                tileBeingDisplayed = _hit.transform.gameObject; 
+                tileBeingDisplayed = _hit.transform.gameObject;
+                
+                GameCanvas.enabled = true; 
+                SetCurrentTileDisplayUI();
             }
             else if (tileBeingDisplayed != _hit.transform.gameObject) 
             { 
@@ -158,6 +167,9 @@ public class GameManager : MonoBehaviour
                 cursorY = selectedYTile; 
                 _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true; 
                 tileBeingDisplayed = _hit.transform.gameObject;
+                
+                GameCanvas.enabled = true; 
+                SetCurrentTileDisplayUI();
             }
         } 
         // If hovering mouse over a character, highlight a tile that the character is occupying
@@ -171,6 +183,9 @@ public class GameManager : MonoBehaviour
                 cursorY = selectedYTile; 
                 _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true; 
                 tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<CharacterController>().tileBeingOccupied;
+                
+                GameCanvas.enabled = true; 
+                SetCurrentTileDisplayUI();
             }
             else if (tileBeingDisplayed != _hit.transform.gameObject)
             {
@@ -186,6 +201,9 @@ public class GameManager : MonoBehaviour
                     cursorY = selectedYTile;
                     _mapGenerator.QuadOnMapCursor[selectedXTile, selectedYTile].GetComponent<MeshRenderer>().enabled = true;
                     tileBeingDisplayed = _hit.transform.parent.gameObject.GetComponent<CharacterController>().tileBeingOccupied;
+                    
+                    GameCanvas.enabled = true; 
+                    SetCurrentTileDisplayUI();
                 }
             }
         }
@@ -451,6 +469,7 @@ public class GameManager : MonoBehaviour
             quadToUpdate.GetComponent<Renderer>().enabled = true;
         }
     }
+    
     // Moves the char
     public void MoveChar()
     {
@@ -467,5 +486,14 @@ public class GameManager : MonoBehaviour
            }
           
        }
+    }
+    
+    // UI for on cursor tile info display
+    public void SetCurrentTileDisplayUI()
+    {
+        TilePosText.text = "TilePos: " + selectedXTile.ToString() + "," + selectedYTile.ToString();
+        TileOccupiedText.text = "Occupied: " + tileBeingDisplayed.GetComponent<Tile>().isTileOccupied;
+        TileMovementCostText.text =
+            "MovementCost: " + _mapGenerator.tileTypes[_mapGenerator.Tiles[selectedXTile, selectedYTile]].movementCost.ToString(); //tileBeingDisplayed.GetComponent<TileType>().movementCost.ToString(); 
     }
 }

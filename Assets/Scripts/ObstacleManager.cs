@@ -37,12 +37,15 @@ public class ObstacleManager : MonoBehaviour
             
             GameObject newObstacle =
                 Instantiate(obstacleSo.obstacleType, new Vector3(posX, 0, posY), Quaternion.identity);
+            //obstacleSo.obstacleType = _mapGenerator.tileTypes[3].tilePrefab;
+            //GameObject newObstacle =
+                    //Instantiate(obstacleSo.obstacleType, new Vector3(posX, 0, posY), Quaternion.identity);
             newObstacle.GetComponent<Tile>().tileX = posX;
             newObstacle.GetComponent<Tile>().tileY = posY;
             newObstacle.GetComponent<Tile>().map = _mapGenerator;
             newObstacle.transform.SetParent(ObstaclesContainer.transform);
             _mapGenerator.TilesOnMap[posX, posY] = newObstacle;
-            _mapGenerator.Tiles[posX, posY] = 4; 
+            _mapGenerator.Tiles[posX, posY] = 3; 
         }
     }
 }
