@@ -7,7 +7,7 @@ using UnityEngine.Serialization;
 public class MapManager : MonoBehaviour
 {
     private MapGenerator _map;
-    public CharacterController player;
+    public CharacterController[] character;
     private GameManager _gameManager;
 
     public GameObject charsOnBoard; 
@@ -23,69 +23,89 @@ public class MapManager : MonoBehaviour
     public int charSelectedPrevY;
 
     public GameObject prevOccupiedTile;
-
-    //Raycast for the update for mouseHover 
-    private Ray _ray;
-    private RaycastHit _hit;
-
+    
     [Header("Materials")] 
     public Material greenUIMat;
     public Material blueUIMat;
     public Material redUIMat;
-    
-    void Start()
+
+    void Awake()
     {
         _map = GetComponent<MapGenerator>();
-        player = player.GetComponent<CharacterController>();
+        character = FindObjectsOfType(typeof(CharacterController)) as CharacterController[];
         _gameManager = GetComponent<GameManager>();
+    }
+
+    private void Start()
+    {
+        character[0] = FindObjectOfType(typeof(PlayerController)) as CharacterController; 
+        character[1] = FindObjectOfType(typeof(EnemyController)) as CharacterController;
     }
 
     void Update()
     {
-        // If input is left mouse down then selects the character
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (selectedChar == null)
+        for (int i = 0; i < character.Length; i++)
+        { 
+            // If input is left mouse down then selects the character
+            if (Input.GetMouseButtonDown(0))
             {
-                MouseClickToSelectChar();
-            }
-            
-            // Once the char has been selected, need to check if the unit has entered the selection state (1) 'Selected'; if yes then move the unit
-            else if (player.charMoveState == player.GetMovementStates(1) && player.MovementQueue.Count == 0)
-            {
-                if (SelectTileToMoveTo())
+                if (selectedChar == null)
                 {
-                    Debug.Log("Movement path has been selected");
-                    charSelectedPrevX = player.x;
-                    charSelectedPrevY = player.y;
-                    prevOccupiedTile = player.tileBeingOccupied;
-                    _gameManager.MoveChar();
-
-                    StartCoroutine(player.MoveCharAndFinalise()); 
+                    MouseClickToSelectChar();
                 }
-                // Finalise the movement
-                else if(player.charMoveState == player.GetMovementStates(2))
+                
+                // Once the char has been selected, need to check if the character has entered the selection state (1) 'Selected'; if yes then move the character
+                else if (character[i].charMoveState == character[i].GetMovementStates(1) && character[i].MovementQueue.Count == 0)
                 {
-                    finaliseOption();
-                }
-            }
-        }
-        // Deselect the char with the right click
-        if (Input.GetMouseButtonDown(1))
-        {
-            if (selectedChar != null)
-            {
-                if (selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 0)
-                {
-                    if (selectedChar.GetComponent<CharacterController>().charMoveState !=
-                        selectedChar.GetComponent<CharacterController>().GetMovementStates(3))
+                    if (selectedChar.GetComponent<CharacterController>().teamNo == CharacterController.Team.Player)
                     {
-                        DeselectChar();
+                        if (SelectTileToMoveTo())
+                        {
+                            Debug.Log("Movement path has been selected");
+                            charSelectedPrevX = character[i].x;
+                            charSelectedPrevY = character[i].y;
+                            prevOccupiedTile = character[i].tileBeingOccupied;
+                            
+                            _gameManager.MoveChar();
+                            StartCoroutine(character[i].MoveCharAndFinalise()); 
+                        }
+                        // Finalise the movement
+                        else if(character[i].charMoveState == character[i].GetMovementStates(2))
+                        {
+                            FinaliseOption();
+                        }
+                    }
+                    else if (selectedChar.GetComponent<CharacterController>().teamNo == CharacterController.Team.Enemy)
+                    {
+                        Debug.Log("Movement path has been selected");
+                        charSelectedPrevX = character[i].x;
+                        charSelectedPrevY = character[i].y;
+                        prevOccupiedTile = character[i].tileBeingOccupied;
+                        
+                        selectedChar.GetComponent<EnemyController>().FindTargetToMoveTo();
+                        
+                        _gameManager.MoveChar();
+                        StartCoroutine(character[i].MoveCharAndFinalise());
                     }
                 }
-                else if (selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 1)
+            }
+            // Deselect the char with the right click
+            if (Input.GetMouseButtonDown(1))
+            {
+                if (selectedChar != null)
                 {
-                    selectedChar.GetComponent<CharacterController>().visualMoveSpeed = 0.5f;
+                    if (selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 0)
+                    {
+                        if (selectedChar.GetComponent<CharacterController>().charMoveState !=
+                        selectedChar.GetComponent<CharacterController>().GetMovementStates(3))
+                        {
+                            DeselectChar();
+                        }
+                    }
+                    else if (selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 1)
+                    {
+                        selectedChar.GetComponent<CharacterController>().visualMoveSpeed = 0.5f;
+                    }
                 }
             }
         }
@@ -104,7 +124,7 @@ public class MapManager : MonoBehaviour
                         .GetComponent<CharacterController>().GetComponent<CharacterController>().GetMovementStates(0))
                 {
                     selectedChar = tempSelectedChar;
-                    selectedChar.GetComponent<CharacterController>().map = _map;
+                    selectedChar.GetComponent<CharacterController>()._mapGenerator = _map;
                     selectedChar.GetComponent<CharacterController>().SetMovementStates(1);
                     charSelected = true;
                     HighlightCharRange();
@@ -153,7 +173,21 @@ public class MapManager : MonoBehaviour
                 return true;
             }
         }
-
+        // else if (hit.transform.gameObject.CompareTag("Enemy"))
+        // {
+        //     if (hit.transform.parent.GetComponent<CharacterController>().teamNo !=
+        //         selectedChar.GetComponent<CharacterController>().teamNo)
+        //     {
+        //         Debug.Log("Clicked a player");
+        //     }
+        //     else if (hit.transform.parent.gameObject == selectedChar)
+        //     {
+        //         GeneratePathTo(selectedChar.GetComponent<CharacterController>().x, selectedChar.GetComponent<CharacterController>().y);
+        //         
+        //         return true;
+        //     }
+        // }
+        
         return false;
     }
     
@@ -178,11 +212,16 @@ public class MapManager : MonoBehaviour
     {
         if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile != null)
         {
-            if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile.GetComponent<CharacterController>().teamNo !=
-                selectedChar.GetComponent<CharacterController>().teamNo)
+            if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile.GetComponent<CharacterController>().teamNo ==
+                CharacterController.Team.Enemy)
             {
                 return false;
             }
+            // if (_map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile.GetComponent<CharacterController>().teamNo !=
+            //     selectedChar.GetComponent<CharacterController>().teamNo)
+            // {
+            //     return false;
+            // }
         }
         return _map.tileTypes[_map.Tiles[x, y]].isWalkable;
     }
@@ -207,12 +246,24 @@ public class MapManager : MonoBehaviour
         if (selectedChar.GetComponent<CharacterController>().x == x &&
             selectedChar.GetComponent<CharacterController>().y == y)
         {
-            Debug.Log("Clicked the same tile that the character currently standing on"); 
+            Debug.Log("Clicked the same tile that the character currently standing on");
+            selectedChar.GetComponent<CharacterController>().CurrentPath = new List<Node>();
+            selectedChar.GetComponent<CharacterController>().Path =
+                selectedChar.GetComponent<CharacterController>().CurrentPath;
+            
+            return;
         }
 
-        selectedChar.GetComponent<CharacterController>().Path = null;
-        player.CurrentPath = null; 
+        // if (CharCanEnterTile(x, y) == false)
+        // {
+        //     // can't move onto that position so can't set it as an endpoint so just return
+        //     return;
+        // }
         
+        selectedChar.GetComponent<CharacterController>().Path = null;
+        selectedChar.GetComponent<CharacterController>().CurrentPath = null;
+
+        Debug.Log("Generating the path");
         // Path finding algorithm
         Dictionary<Node, float> dist = new Dictionary<Node, float>();
         Dictionary<Node, Node> prev = new Dictionary<Node, Node>();
@@ -222,7 +273,9 @@ public class MapManager : MonoBehaviour
         dist[source] = 0;
         prev[source] = null;
         List<Node> unvisited = new List<Node>(); // unchecked Nodes
-        
+
+        Debug.Log(CostToEnterTile(target.X, target.Y));
+
         // Initialise 
         foreach (Node n in _map.Graph)
         {
@@ -231,6 +284,8 @@ public class MapManager : MonoBehaviour
             {
                 dist[n] = Mathf.Infinity;
                 prev[n] = null;
+                //Node node = new Node();
+                //prev[n] = node;
             }
             unvisited.Add(n);
         }
@@ -248,12 +303,15 @@ public class MapManager : MonoBehaviour
             }
 
             if (u == target)
+            {
                 break;
+            }
 
             unvisited.Remove(u);
 
             foreach (Node n in u.Neighbours)
             {
+            
                 float alt = dist[u] + CostToEnterTile(n.X, n.Y);
                 if (alt < dist[n])
                 {
@@ -262,7 +320,8 @@ public class MapManager : MonoBehaviour
                 }
             }
         }
-        
+        Debug.Log("Target:" + target.X + "," + target.Y);
+        Debug.Log("Prev:" + prev[target].X + "," + prev[target].Y);
         // If were here then found the shortest path or no path exists
         if (prev[target] == null)
         {
@@ -270,20 +329,23 @@ public class MapManager : MonoBehaviour
             return;
         }
 
-        player.CurrentPath = new List<Node>();
+        selectedChar.GetComponent<CharacterController>().CurrentPath = new List<Node>();
         Node curr = target;
         
+        Debug.Log(curr.X + "," + curr.Y);
         // Step through the current path and add it to the chain
         while (curr != null)
         {
-            player.CurrentPath.Add(curr);
+            selectedChar.GetComponent<CharacterController>().CurrentPath.Add(curr);
             curr = prev[curr];
         }
-        
-        // Currently currPath is from target to our source, need to reverse it from source to target
-        player.CurrentPath.Reverse();
 
-        selectedChar.GetComponent<CharacterController>().Path = player.CurrentPath; 
+        // Currently currPath is from target to our source, need to reverse it from source to target
+        selectedChar.GetComponent<CharacterController>().CurrentPath.Reverse();
+
+        selectedChar.GetComponent<CharacterController>().Path = selectedChar.GetComponent<CharacterController>().CurrentPath; 
+        
+        Debug.Log("The movement path has been generated: " + selectedChar.GetComponent<CharacterController>().Path.Count);
     }
     
     // In:  || Out: returns a set of nodes of the tile that the character is occupying
@@ -331,18 +393,16 @@ public class MapManager : MonoBehaviour
                     if (!finalMovementHighlight.Contains(neighbour))
                     {
                         cost[neighbour.X, neighbour.Y] = CostToEnterTile(neighbour.X, neighbour.Y) + cost[n.X, n.Y];
-
                         if (moveSpeed - cost[neighbour.X, neighbour.Y] >= 0)
                         {
                             tempUIHighlight.Add(neighbour); 
                         }
                     }
                 }
-
-                uiHighlight = tempUIHighlight;
-                finalMovementHighlight.UnionWith(uiHighlight);
-                tempUIHighlight = new HashSet<Node>();
             }
+            uiHighlight = tempUIHighlight;
+            finalMovementHighlight.UnionWith(uiHighlight);
+            tempUIHighlight = new HashSet<Node>();
         }
 
         Debug.Log("The total amount of movable space for this character is: " + finalMovementHighlight.Count);
@@ -473,7 +533,7 @@ public class MapManager : MonoBehaviour
             {
                 GameObject charOnCurrSelectedTile = _map.TilesOnMap[n.X, n.Y].GetComponent<Tile>().charOnTile;
                 if (charOnCurrSelectedTile.GetComponent<CharacterController>().teamNo !=
-                    player.GetComponent<CharacterController>().teamNo)
+                    selectedChar.GetComponent<CharacterController>().teamNo)
                 {
                     finalEnemyInMoveRange.Add(n);
                 }
@@ -496,14 +556,13 @@ public class MapManager : MonoBehaviour
         }
     }
 
-        // Highlights the enemies in range once they've been added to a hashset 
+    // Highlights the enemies in range once they've been added to a hashset 
     public void HighlightEnemiesInRange(HashSet<Node> enemiesToHighlight)
     {
         foreach (Node n in enemiesToHighlight)
         {
             _map.QuadOnMap[n.X, n.Y].GetComponent<Renderer>().material = redUIMat;
             _map.QuadOnMap[n.X, n.Y].GetComponent<MeshRenderer>().enabled = true;
-
         }
     }
     
@@ -537,10 +596,10 @@ public class MapManager : MonoBehaviour
                 _map.TilesOnMap[selectedChar.GetComponent<CharacterController>().x,
                     selectedChar.GetComponent<CharacterController>().y].GetComponent<Tile>().charOnTile = null;
                 _map.TilesOnMap[charSelectedPrevX, charSelectedPrevY].GetComponent<Tile>().charOnTile = selectedChar;
-
-                //selectedChar.GetComponent<PlayerMovement>().x = charSelectedPrevX;
-                //selectedChar.GetComponent<PlayerMovement>().y = charSelectedPrevY;
-                //selectedChar.GetComponent<PlayerMovement>().tileBeingOccupied = prevOccupiedTile;
+            
+                selectedChar.GetComponent<CharacterController>().x = charSelectedPrevX;
+                selectedChar.GetComponent<CharacterController>().y = charSelectedPrevY;
+                selectedChar.GetComponent<CharacterController>().tileBeingOccupied = prevOccupiedTile;
                 //selectedChar.transform.position = _map.TileCoordToWorldCoord(charSelectedPrevX, charSelectedPrevY);
                 selectedChar.GetComponent<CharacterController>().SetMovementStates(0);
                 selectedChar = null;
@@ -596,7 +655,7 @@ public class MapManager : MonoBehaviour
     }
     
     // Finalises the player's option 
-    public void finaliseOption()
+    public void FinaliseOption()
     {
         RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

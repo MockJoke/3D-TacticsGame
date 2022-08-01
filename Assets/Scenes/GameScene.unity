@@ -1090,9 +1090,6 @@ MonoBehaviour:
   mapUI: {fileID: 3026057191975821090, guid: 41666af9af755b940a08bbf676955815, type: 3}
   mapCursorUI: {fileID: 2809973883653077971, guid: 817e2138e088b2446ac4fe4a4b84be15, type: 3}
   mapCharMovementUI: {fileID: 7574935962785293978, guid: 97a08a6113dffb44888c9b21c5e79581, type: 3}
-  ObstaclePosX: 0
-  obstaclePosY: 0
-  obstacleTt: 0
 --- !u!114 &712200883
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1105,7 +1102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f22f3e079a7d1fa4d9c0ec579f2feade, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 906464625}
+  character: []
   charsOnBoard: {fileID: 1474314463}
   selectedChar: {fileID: 0}
   charSelected: 0
@@ -1128,7 +1125,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   map: {fileID: 712200880}
-  player: {fileID: 906464625}
   cursorX: 0
   cursorY: 0
   selectedXTile: 0
@@ -1339,7 +1335,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 906464623}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1, y: 0.75, z: 1}
+  m_LocalPosition: {x: 1, y: 0.75, z: 2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 392614574}
@@ -1355,7 +1351,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 906464623}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1eb606f5d1711d24c82dc082afaf3859, type: 3}
+  m_Script: {fileID: 11500000, guid: 1152127f49d47ed47bc47dc165429880, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   x: 0
@@ -1363,8 +1359,8 @@ MonoBehaviour:
   teamNo: 0
   tileBeingOccupied: {fileID: 0}
   visualMoveSpeed: 0.15
-  charName: 
-  moveSpeed: 5
+  charName: Player
+  moveSpeed: 25
   attackRange: 1
   attackDamage: 1
   maxHealthPoints: 5
@@ -1373,7 +1369,9 @@ MonoBehaviour:
   endPoint: {fileID: 0}
   moveSpeedTime: 1
   charMoveState: 0
-  map: {fileID: 712200882}
+  map: {fileID: 712200880}
+  _mapGenerator: {fileID: 0}
+  _mapManager: {fileID: 0}
   completedMovement: 0
 --- !u!1 &963194225
 GameObject:
@@ -1788,7 +1786,7 @@ GameObject:
   - component: {fileID: 1500088115}
   m_Layer: 0
   m_Name: Enemy
-  m_TagString: Player
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1817,7 +1815,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1500088113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1eb606f5d1711d24c82dc082afaf3859, type: 3}
+  m_Script: {fileID: 11500000, guid: e48350deabda5ef4db8d7b878c2e9534, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   x: 0
@@ -1825,8 +1823,8 @@ MonoBehaviour:
   teamNo: 1
   tileBeingOccupied: {fileID: 0}
   visualMoveSpeed: 0.15
-  charName: 
-  moveSpeed: 5
+  charName: Enemy
+  moveSpeed: 100
   attackRange: 1
   attackDamage: 1
   maxHealthPoints: 5
@@ -1835,8 +1833,13 @@ MonoBehaviour:
   endPoint: {fileID: 0}
   moveSpeedTime: 1
   charMoveState: 0
-  map: {fileID: 712200882}
+  map: {fileID: 712200880}
+  _mapGenerator: {fileID: 0}
+  _mapManager: {fileID: 0}
   completedMovement: 0
+  player: {fileID: 906464625}
+  targetX: 0
+  targetY: 0
 --- !u!1 &1592868510
 GameObject:
   m_ObjectHideFlags: 0
@@ -1930,7 +1933,7 @@ GameObject:
   - component: {fileID: 1659127742}
   m_Layer: 0
   m_Name: Enemy_3Dmodel
-  m_TagString: Player
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -40,15 +40,11 @@ public class MapGenerator : MonoBehaviour
     public GameObject[,] QuadOnMapForCharMovement;
     public GameObject[,] QuadOnMapCursor;
 
-    [HideInInspector] 
-    public int ObstaclePosX;
-    public int obstaclePosY;
-    public int obstacleTt; 
-
+    private MapManager _mapManager; 
+    
     void Start()
     {
-        MapManager mapManager = GetComponent<MapManager>();
-        GameManager gameManager = GetComponent<GameManager>();
+        _mapManager = GetComponent<MapManager>();
         // Generate the map info that will be used
         GenerateMapInfo();
         // Generate path finding graph
@@ -56,7 +52,7 @@ public class MapGenerator : MonoBehaviour
         // With the generated info this function will read the info and produce the map
         GenerateMapVisuals();
         // Check if there're any pre-existing chars on the board
-        mapManager.SetIfTileIsOccupied();
+        _mapManager.SetIfTileIsOccupied();
     }
 
     // Set the tiles[x,y] to the corresponding tile
@@ -76,27 +72,27 @@ public class MapGenerator : MonoBehaviour
 
         Tiles[2, 7] = 3;
         Tiles[3, 7] = 3;
-
+        
         Tiles[6, 7] = 3;
         Tiles[7, 7] = 3;
-
+        
         Tiles[2, 2] = 3;
         Tiles[3, 2] = 3;
-
+        
         Tiles[6, 2] = 3;
         Tiles[7, 2] = 3;
-
+        
         Tiles[0, 3] = 1;
         Tiles[1, 3] = 1;
         Tiles[0, 2] = 1;
         Tiles[1, 2] = 1;
-
+        
         Tiles[0, 6] = 1;
         Tiles[1, 6] = 1;
         Tiles[2, 6] = 1;
         Tiles[0, 7] = 1;
         Tiles[1, 7] = 1;
-
+        
         Tiles[2, 3] = 1;
         Tiles[0, 4] = 1;
         Tiles[0, 5] = 1;
@@ -104,12 +100,12 @@ public class MapGenerator : MonoBehaviour
         Tiles[1, 5] = 1;
         Tiles[2, 4] = 1;
         Tiles[2, 5] = 1;
-
+        
         Tiles[4, 4] = 2;
         Tiles[5, 4] = 2;
         Tiles[4, 5] = 2;
         Tiles[5, 5] = 2;
-
+        
         Tiles[7, 3] = 1;
         Tiles[8, 3] = 1;
         Tiles[9, 3] = 1;

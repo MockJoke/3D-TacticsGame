@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     public GameObject map;
     private MapGenerator _mapGenerator;
     private MapManager _mapManager;
-    public CharacterController player;
+    //public CharacterController player;
     
     // Raycast for the update of charHover info
     private Ray _ray;
@@ -23,7 +23,6 @@ public class GameManager : MonoBehaviour
     public int selectedYTile;
     
     public GameObject tileBeingDisplayed;
-    //public bool isTileOccupied = false; 
     public bool charPathExists;
     
     // var for charPotentialMovementRoute
@@ -48,7 +47,7 @@ public class GameManager : MonoBehaviour
     {
        _mapManager = map.GetComponent<MapManager>();
        _mapGenerator = map.GetComponent<MapGenerator>();
-       player = player.GetComponent<CharacterController>();
+       //player = player.GetComponent<CharacterController>();
 
        charPathToCursor = new List<Node>();
        charPathExists = false;
@@ -74,10 +73,11 @@ public class GameManager : MonoBehaviour
                       cursorY != _mapManager.selectedChar.GetComponent<CharacterController>().y)
                   {
                       if (!charPathExists &&
-                          _mapManager.selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 0)
+                          _mapManager.selectedChar.GetComponent<CharacterController>().MovementQueue.Count == 0 && _mapManager.selectedChar.GetComponent<CharacterController>().teamNo ==
+                       CharacterController.Team.Player)
                       {
                           charPathToCursor = GenerateCursorRouteTo(cursorX, cursorY);
-
+                          
                           routeToX = cursorX;
                           routeToY = cursorY;
 
@@ -173,7 +173,7 @@ public class GameManager : MonoBehaviour
             }
         } 
         // If hovering mouse over a character, highlight a tile that the character is occupying
-        else if (_hit.transform.CompareTag("Player")) 
+        else if (_hit.transform.CompareTag("Player") || _hit.transform.CompareTag("Enemy")) 
         { 
             if (tileBeingDisplayed == null) 
             { 
@@ -473,19 +473,20 @@ public class GameManager : MonoBehaviour
     // Moves the char
     public void MoveChar()
     {
-       if (_mapManager.selectedChar != null)
-       {
+        Debug.Log("Starting to move the char");
+        if (_mapManager.selectedChar != null)
+        {
            if (_mapManager.selectedChar.GetComponent<CharacterController>().teamNo == CharacterController.Team.Player)
            {
-               _mapManager.selectedChar.GetComponent<CharacterController>().MoveNextTile();
+               _mapManager.selectedChar.GetComponent<CharacterController>().MoveToNextTile();
            }
            else if (_mapManager.selectedChar.GetComponent<CharacterController>().teamNo ==
                     CharacterController.Team.Enemy)
            {
-               
+               _mapManager.selectedChar.GetComponent<CharacterController>().MoveToNextTile();
            }
           
-       }
+        }
     }
     
     // UI for on cursor tile info display
@@ -494,6 +495,6 @@ public class GameManager : MonoBehaviour
         TilePosText.text = "TilePos: " + selectedXTile.ToString() + "," + selectedYTile.ToString();
         TileOccupiedText.text = "Occupied: " + tileBeingDisplayed.GetComponent<Tile>().isTileOccupied;
         TileMovementCostText.text =
-            "MovementCost: " + _mapGenerator.tileTypes[_mapGenerator.Tiles[selectedXTile, selectedYTile]].movementCost.ToString(); //tileBeingDisplayed.GetComponent<TileType>().movementCost.ToString(); 
+            "MovementCost: " + _mapGenerator.tileTypes[_mapGenerator.Tiles[selectedXTile, selectedYTile]].movementCost.ToString(); 
     }
 }

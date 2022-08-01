@@ -22,10 +22,10 @@ public class CharacterController : MonoBehaviour
     
     [Header("Character Stats")] 
     public string charName;
-    public int moveSpeed = 2;
-    public int attackRange = 1;
-    public int attackDamage = 1;
-    public int maxHealthPoints = 5;
+    public int moveSpeed;
+    public int attackRange;
+    public int attackDamage;
+    public int maxHealthPoints;
     public int currHeathPoints;
 
     // Location for positional updates
@@ -44,8 +44,9 @@ public class CharacterController : MonoBehaviour
     }
     public MovementStates charMoveState;
     
-    public MapGenerator map;
-    private MapManager _mapManager;
+    public GameObject map;
+    [HideInInspector] public MapGenerator _mapGenerator;
+    [HideInInspector] public MapManager _mapManager;
     
     // to define the play
     public Queue<int> MovementQueue;
@@ -96,20 +97,20 @@ public class CharacterController : MonoBehaviour
 
     void Start()
     {
-        map = map.GetComponent<MapGenerator>();
+        _mapGenerator = map.GetComponent<MapGenerator>();
         _mapManager = map.GetComponent<MapManager>();
     }
 
-    public virtual void MoveNextTile()
+    public virtual void MoveToNextTile()
     {
         if (Path.Count == 0)
         {
             return;
         }
-        else
-        {
-            StartCoroutine(MoveOverSeconds(transform.gameObject, Path[Path.Count - 1])); 
-        }
+       
+        Debug.Log("Moving the char");
+        
+        StartCoroutine(MoveOverSeconds(transform.gameObject, Path[Path.Count - 1]));
     }
     
     // Moves the unit then finalises the movement
@@ -129,7 +130,7 @@ public class CharacterController : MonoBehaviour
     // Finalises the movement & sets the tile char moved to as occupied
     public void FinaliseMovementPos()
     {
-        map.TilesOnMap[x, y].GetComponent<Tile>().charOnTile = _mapManager.selectedChar;
+        _mapGenerator.TilesOnMap[x, y].GetComponent<Tile>().charOnTile = _mapManager.selectedChar;
         
         SetMovementStates(2);
         
@@ -137,15 +138,16 @@ public class CharacterController : MonoBehaviour
         _mapManager.HighlightTileCharIsOccupying();
     }
 
-    public IEnumerator MoveOverSeconds(GameObject objectToMove, Node endNode)
-    {
+    public virtual IEnumerator MoveOverSeconds(GameObject objectToMove, Node endNode)
+    { 
         MovementQueue.Enqueue(1);
         
         // Remove the first thing on path because its the tile we're standing on 
         Path.RemoveAt(0);
+
         while (Path.Count != 0)
         {
-            Vector3 endPos = map.TileCoordToWorldCoord(Path[0].X, Path[0].Y);
+            Vector3 endPos = _mapGenerator.TileCoordToWorldCoord(Path[0].X, Path[0].Y);
             objectToMove.transform.position = Vector3.Lerp(transform.position, endPos, visualMoveSpeed);
             if ((transform.position - endPos).sqrMagnitude < 0.001)
             {
@@ -154,13 +156,13 @@ public class CharacterController : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
 
-        transform.position = map.TileCoordToWorldCoord(endNode.X, endNode.Y);
+        transform.position = _mapGenerator.TileCoordToWorldCoord(endNode.X, endNode.Y);
 
         x = endNode.X;
         y = endNode.Y;
 
         tileBeingOccupied.GetComponent<Tile>().charOnTile = null;
-        tileBeingOccupied = map.TilesOnMap[x, y];
+        tileBeingOccupied = _mapGenerator.TilesOnMap[x, y];
         MovementQueue.Dequeue();
     }
 
