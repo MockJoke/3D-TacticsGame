@@ -29,8 +29,6 @@ public class EnemyController : CharacterController, IAIInterface
         targetX = player.x;
         targetY = player.y;
         
-        Debug.Log("Target to move to has been selected");
-        
         _mapManager.GeneratePathTo(targetX, targetY);
     }
 
@@ -41,12 +39,10 @@ public class EnemyController : CharacterController, IAIInterface
             return;
         }
        
-        Debug.Log("Moving the char");
-        
         StartCoroutine(MoveOverSeconds(transform.gameObject, Path[Path.Count - 2]));
     }
 
-    public override IEnumerator MoveOverSeconds(GameObject objectToMove, Node endNode)
+    protected override IEnumerator MoveOverSeconds(GameObject objectToMove, Node endNode)
     {
         MovementQueue.Enqueue(1);
         

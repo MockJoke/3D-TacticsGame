@@ -51,7 +51,7 @@ public class MapGenerator : MonoBehaviour
         GeneratePathfindingGraph();
         // With the generated info this function will read the info and produce the map
         GenerateMapVisuals();
-        // Check if there're any pre-existing chars on the board
+        // Check if there are any pre-existing chars on the board
         _mapManager.SetIfTileIsOccupied();
     }
 

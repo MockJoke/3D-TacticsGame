@@ -47,7 +47,6 @@ public class GameManager : MonoBehaviour
     {
        _mapManager = map.GetComponent<MapManager>();
        _mapGenerator = map.GetComponent<MapGenerator>();
-       //player = player.GetComponent<CharacterController>();
 
        charPathToCursor = new List<Node>();
        charPathExists = false;
@@ -217,7 +216,7 @@ public class GameManager : MonoBehaviour
     // In: x & y location to go to
     // Out: List of nodes to traverse 
     // generate the cursor route to a position x, y
-    public List<Node> GenerateCursorRouteTo(int x, int y)
+    private List<Node> GenerateCursorRouteTo(int x, int y)
     {
         if (_mapManager.selectedChar.GetComponent<CharacterController>().x == x &&
             _mapManager.selectedChar.GetComponent<CharacterController>().y == y)
@@ -310,7 +309,7 @@ public class GameManager : MonoBehaviour
     // In: two gameobjects curr vector & next one in the list
     // Out: vector which is the dir bw the two inputs
     // the dir from curr to the next vector is returned
-    public Vector2 DirectionBetween(Vector2 currVector, Vector2 nextVector)
+    private Vector2 DirectionBetween(Vector2 currVector, Vector2 nextVector)
     {
         Vector2 vectorDir = (nextVector - currVector).normalized;
 
@@ -332,7 +331,7 @@ public class GameManager : MonoBehaviour
     // In: two nodes that are being checked and i is the pos in the path 
     // Out: void 
     // orients the quads to display proper info
-    public void SetRouteWithIO(int nodeX, int nodeY, int i)
+    private void SetRouteWithIO(int nodeX, int nodeY, int i)
     {
         Vector2 prevTile = new Vector2(charPathToCursor[i - 1].X + 1, charPathToCursor[i - 1].Y + 1); 
         Vector2 currTile = new Vector2(charPathToCursor[i].X + 1, charPathToCursor[i].Y + 1);
@@ -434,7 +433,7 @@ public class GameManager : MonoBehaviour
     // In: two nodes that are being checked and i is the pos in the path
     // Out: void
     // orients the quad for the final node in the list to display proper info
-    public void SetRouteFinalTile(int nodeX, int nodeY, int i)
+    private void SetRouteFinalTile(int nodeX, int nodeY, int i)
     {
         Vector2 prevTile = new Vector2(charPathToCursor[i - 1].X + 1, charPathToCursor[i - 1].Y + 1); 
         Vector2 currTile = new Vector2(charPathToCursor[i].X + 1, charPathToCursor[i].Y + 1);
@@ -473,7 +472,6 @@ public class GameManager : MonoBehaviour
     // Moves the char
     public void MoveChar()
     {
-        Debug.Log("Starting to move the char");
         if (_mapManager.selectedChar != null)
         {
            if (_mapManager.selectedChar.GetComponent<CharacterController>().teamNo == CharacterController.Team.Player)
@@ -490,7 +488,7 @@ public class GameManager : MonoBehaviour
     }
     
     // UI for on cursor tile info display
-    public void SetCurrentTileDisplayUI()
+    private void SetCurrentTileDisplayUI()
     {
         TilePosText.text = "TilePos: " + selectedXTile.ToString() + "," + selectedYTile.ToString();
         TileOccupiedText.text = "Occupied: " + tileBeingDisplayed.GetComponent<Tile>().isTileOccupied;

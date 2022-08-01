@@ -50,7 +50,6 @@ public class CharacterController : MonoBehaviour
     
     // to define the play
     public Queue<int> MovementQueue;
-    public Queue<int> CombatQueue;
 
     // Pathfinding
     public List<Node> Path = null; 
@@ -87,7 +86,6 @@ public class CharacterController : MonoBehaviour
     void Awake()
     {
         MovementQueue = new Queue<int>();
-        CombatQueue = new Queue<int>();
 
         x = (int) transform.position.x;
         y = (int) transform.position.z;
@@ -108,8 +106,6 @@ public class CharacterController : MonoBehaviour
             return;
         }
        
-        Debug.Log("Moving the char");
-        
         StartCoroutine(MoveOverSeconds(transform.gameObject, Path[Path.Count - 1]));
     }
     
@@ -128,7 +124,7 @@ public class CharacterController : MonoBehaviour
     }
     
     // Finalises the movement & sets the tile char moved to as occupied
-    public void FinaliseMovementPos()
+    private void FinaliseMovementPos()
     {
         _mapGenerator.TilesOnMap[x, y].GetComponent<Tile>().charOnTile = _mapManager.selectedChar;
         
@@ -138,7 +134,7 @@ public class CharacterController : MonoBehaviour
         _mapManager.HighlightTileCharIsOccupying();
     }
 
-    public virtual IEnumerator MoveOverSeconds(GameObject objectToMove, Node endNode)
+    protected virtual IEnumerator MoveOverSeconds(GameObject objectToMove, Node endNode)
     { 
         MovementQueue.Enqueue(1);
         
@@ -165,17 +161,5 @@ public class CharacterController : MonoBehaviour
         tileBeingOccupied = _mapGenerator.TilesOnMap[x, y];
         MovementQueue.Dequeue();
     }
-
-    public void MoveAgain()
-    {
-        Path = null;
-        SetMovementStates(0);
-        completedMovement = false;
-    }
-
-    public void ResetPath()
-    {
-        Path = null;
-        completedMovement = false;
-    }
+    
 }

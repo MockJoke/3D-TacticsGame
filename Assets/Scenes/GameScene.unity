@@ -1109,9 +1109,8 @@ MonoBehaviour:
   charSelectedPrevX: 0
   charSelectedPrevY: 0
   prevOccupiedTile: {fileID: 0}
-  greenUIMat: {fileID: 2100000, guid: fa69bee1beda22f4fbce0a99eac6075b, type: 2}
-  blueUIMat: {fileID: 2100000, guid: f6f8a66a326f3da4c90841b31c0435b3, type: 2}
-  redUIMat: {fileID: 2100000, guid: 85e00487abc670e44960f0fd630bcb73, type: 2}
+  moveRangeUIMat: {fileID: 2100000, guid: 6ca0efbf9607282449373a3f4d8cea70, type: 2}
+  attackRangeUIMat: {fileID: 2100000, guid: 44e0e4ae75d49fa4488cadd2a21c680a, type: 2}
 --- !u!114 &712200884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1246,7 +1245,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -265.10352, y: -213.93457}
+  m_AnchoredPosition: {x: -265, y: -213.93457}
   m_SizeDelta: {x: 530.2073, y: 427.8691}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &854878487
@@ -1360,7 +1359,7 @@ MonoBehaviour:
   tileBeingOccupied: {fileID: 0}
   visualMoveSpeed: 0.15
   charName: Player
-  moveSpeed: 25
+  moveSpeed: 10
   attackRange: 1
   attackDamage: 1
   maxHealthPoints: 5
@@ -1481,7 +1480,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 966691640}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.5960944, y: 2.0591745, z: 4.147319}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 76316875}
@@ -1569,7 +1568,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1204397711}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}
